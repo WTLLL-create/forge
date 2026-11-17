@@ -1,0 +1,13 @@
+{
+  "id": "EP-EVO-003",
+  "status": "proposed",
+  "affected_skill": "paper_structure",
+  "change_type": "boundary_update",
+  "description": "boundary validation: optimization problems must include sensitivity",
+  "new_rule": "优化类论文Blueprint必须包含sensitivity章节",
+  "evidence": "Detected by Reviewer+Consistency in EVO-003",
+  "pattern_id": "FP-EVO-003",
+  "reviewer": "human",
+  "sandbox_required": true,
+  "timestamp": "2026-08-08T08:32:17.320792+00:00"
+}

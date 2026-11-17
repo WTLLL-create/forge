@@ -1,0 +1,104 @@
+# B01: 2018 A — 高温作业服装设计
+
+## ProblemState
+
+```json
+{
+  "problem_id": "CUMCM_2018_A",
+  "problem_type": "hybrid",
+  "sub_type": ["physics_modeling", "single_objective", "parameter_identification"],
+  "core_contradiction": "防护性能(降低皮肤温度) vs 舒适性/成本(厚度+重量最小化)",
+  "domain": "industrial_process",
+  "constraints": [
+    "皮肤温度 ≤ 44°C (安全阈值)",
+    "各层厚度在制造可行范围内",
+    "环境温度 65-80°C (不同工况)"
+  ],
+  "data_status": {
+    "available": true,
+    "format": "题目给定参数表",
+    "has_missing": false,
+    "has_time_series": false
+  },
+  "sub_problems": [
+    { "id": "Q1", "task": "建立多层织物一维传热模型，计算给定厚度下的温度分布", "type": "physics_modeling" },
+    { "id": "Q2", "task": "优化各层厚度以满足防护要求且总厚度最小", "type": "single_objective" },
+    { "id": "Q3", "task": "在不同环境温度下验证设计的鲁棒性", "type": "evaluation" }
+  ]
+}
+```
+
+## DecisionContract
+
+```json
+{
+  "contract_id": "DC-CUMCM_2018_A-v1",
+  "problem_summary": { "problem_type": "hybrid", "sub_types": ["physics_modeling", "single_objective"], "n_sub_problems": 3 },
+  "decisions": [
+    {
+      "sub_problem_id": "Q1",
+      "primary_model": "一维多层稳态热传导 (串联热阻模型)",
+      "model_family": "physics",
+      "reasoning": [
+        "织物平面尺寸 >> 厚度 → 一维近似成立",
+        "多层结构 → 串联热阻叠加, 每层 Fourier 定律",
+        "排除二维模型: 边缘效应可忽略"
+      ],
+      "alternatives_considered": [
+        { "model": "二维有限元", "reason_rejected": "对称性可用一维简化, 精度损失<1% 但计算量大减" }
+      ],
+      "mandatory_validations": ["sensitivity_analysis", "stability_check"],
+      "risk_flags": [
+        { "flag": "层间接触热阻被忽略", "severity": "low", "mitigation": "在假设中声明, 竞赛中可接受" }
+      ],
+      "expected_output": "各层温度分布曲线 + 皮肤侧温度"
+    },
+    {
+      "sub_problem_id": "Q2",
+      "primary_model": "单目标有界优化 (scipy.optimize.minimize with bounds)",
+      "model_family": "optimization",
+      "reasoning": [
+        "设计变量为各层厚度 d_i, 连续变量",
+        "约束可化为 bounds + 罚函数",
+        "目标函数 (总厚度) 光滑可导"
+      ],
+      "alternatives_considered": [
+        { "model": "GA", "reason_rejected": "变量少+连续+可导 → 梯度方法更高效" }
+      ],
+      "mandatory_validations": ["sensitivity_analysis"],
+      "risk_flags": [
+        { "flag": "局部最优风险", "severity": "medium", "mitigation": "多起点优化验证全局性" }
+      ],
+      "expected_output": "最优厚度组合 + 总厚度"
+    },
+    {
+      "sub_problem_id": "Q3",
+      "primary_model": "敏感性分析 + 鲁棒性检验",
+      "model_family": "statistics",
+      "reasoning": [
+        "验证设计在不同工况下的稳定性",
+        "环境温度±10°C 的鲁棒性区间"
+      ],
+      "alternatives_considered": [],
+      "mandatory_validations": ["robustness_check"],
+      "risk_flags": [],
+      "expected_output": "鲁棒性区间 + 敏感性排序"
+    }
+  ],
+  "cross_problem_consistency": {
+    "incremental_approach": true,
+    "model_reuse": ["Q1传热求解器 → Q2目标函数 → Q3鲁棒性分析"],
+    "conflicts": []
+  }
+}
+```
+
+## Candidate Models
+1. 一维多层传热 (primary) — 物理机理, 计算量小, 适合竞赛时间约束
+2. 二维有限元 — 更精确但过度复杂, 排除
+3. GA 优化 — 不适合单变量连续优化, 排除
+
+## Risk Prediction
+- **低风险**: 一维传热是标准解法, 竞赛中广泛使用
+- **中风险**: 局部最优 — 需多起点验证
+- **Decision Score 预估**: 22/25 (问题识别清晰, 但Q3验证方案不够具体)

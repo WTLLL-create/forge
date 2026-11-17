@@ -1,0 +1,60 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "forge-v6/review-artifact/v1",
+  "title": "ReviewArtifact — 审查产物合同 v1.0",
+  "description": "Reviewer Engine 对论文 Artifact 图的审查结果。被 FailureMemory 和 Evolution Controller 消费。v1 覆盖结构审查+模型合理性+结果可信三层。",
+  "type": "object",
+  "required": ["review_id", "findings", "summary"],
+  "properties": {
+    "review_id": {"type": "string"},
+    "target": {"type": "object", "properties": {
+      "blueprint_id": {"type": "string"},
+      "artifact_count": {"type": "integer"}
+    }},
+    "findings": {"type": "array", "items": {"$ref": "#/$defs/finding"}},
+    "summary": {"$ref": "#/$defs/summary"}
+  },
+  "$defs": {
+    "finding": {
+      "type": "object",
+      "required": ["finding_id", "type", "severity", "location", "description"],
+      "properties": {
+        "finding_id": {"type": "string"},
+        "type": {"type": "string", "enum": [
+          "missing_section", "weak_model_choice", "insufficient_validation",
+          "unexplained_result", "contradiction", "format_issue", "innovation_gap"
+        ]},
+        "severity": {"type": "string", "enum": ["P0", "P1", "P2", "P3"]},
+        "layer": {"type": "string", "enum": ["rule", "pattern", "llm_reasoning"]},
+        "location": {"type": "string", "description": "定位到 SectionArtifact.section_id"},
+        "description": {"type": "string"},
+        "evidence": {"type": "string"},
+        "suggestion": {"type": "string"},
+        "score_impact": {"type": "integer"},
+        "confidence": {"type": "number", "minimum": 0, "maximum": 1}
+      }
+    },
+    "summary": {
+      "type": "object",
+      "required": ["dimension_scores", "overall_grade"],
+      "properties": {
+        "dimension_scores": {"type": "object", "properties": {
+          "D1_problem_understanding": {"type": "integer", "minimum": 0, "maximum": 15},
+          "D2_model_reasoning": {"type": "integer", "minimum": 0, "maximum": 25},
+          "D3_solution_reliability": {"type": "integer", "minimum": 0, "maximum": 20},
+          "D4_validation_completeness": {"type": "integer", "minimum": 0, "maximum": 15},
+          "D5_innovation": {"type": "integer", "minimum": 0, "maximum": 15},
+          "D6_paper_quality": {"type": "integer", "minimum": 0, "maximum": 10}
+        }},
+        "total_score": {"type": "integer", "minimum": 0, "maximum": 100},
+        "overall_grade": {"type": "string", "enum": ["excellent", "good", "pass", "needs_revision", "reject"]},
+        "top_weakness": {"type": "string"},
+        "fix_priority": {"type": "array", "items": {"type": "string"}},
+        "findings_by_severity": {"type": "object", "properties": {
+          "P0": {"type": "integer"}, "P1": {"type": "integer"},
+          "P2": {"type": "integer"}, "P3": {"type": "integer"}
+        }}
+      }
+    }
+  }
+}

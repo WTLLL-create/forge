@@ -1,0 +1,21 @@
+{
+  "case": "EVO-003",
+  "detections": {
+    "reviewer": [
+      {
+        "type": "insufficient_validation",
+        "severity": "P1",
+        "description": "\u4f18\u5316\u7c7b\u8bba\u6587\u7f3a\u5c11\u7075\u654f\u5ea6\u5206\u6790\u7ae0\u8282"
+      }
+    ],
+    "consistency": []
+  },
+  "pattern": {
+    "id": "FP-EVO-003",
+    "type": "paper_structure",
+    "frequency": 1,
+    "case_id": "EVO-003",
+    "timestamp": "2026-08-08T08:32:17.320519+00:00"
+  },
+  "timestamp": "2026-08-08T08:32:17.320704+00:00"
+}

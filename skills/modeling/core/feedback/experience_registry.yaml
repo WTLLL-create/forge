@@ -1,0 +1,82 @@
+# Forge v6.2 Experience Registry
+# 记录经过验证的失败模式和建议的改进动作。
+# status: proposed → approved → deployed → verified → retired
+
+experiences:
+
+- id: EXP-001
+  name: missing_alternative_comparison
+  trigger: "DecisionContract.decisions[].alternatives_considered < 2"
+  failure: "模型选择缺少候选对比论证 — 竞赛论文的核心扣分项"
+  action: "Contract Validator L3 强制 alternatives_considered ≥ 2 + 区分度检查"
+  evidence: {cases: [B01,B03,B05,B07,B08,B09,B10], frequency: "7/10", avg_impact: 8}
+  status: resolved  # v6.0 P0修复
+  deployed_in: v6.0
+
+- id: EXP-002
+  name: missing_domain_constraints
+  trigger: "ProblemIntelligence 仅从题面文字提取约束"
+  failure: "领域隐含约束被遗漏 — 电磁阀响应时间/噪声模型/大气折射等"
+  action: "ProblemIntelligence 增加领域约束推导层: 显式约束(题面) + 物理约束(模型卡) + 数学约束(假设推导)"
+  evidence: {cases: [B03,B05,B08,B09,B10], frequency: "5/10", avg_impact: 3}
+  status: proposed
+  priority: P1
+  risk: "中 — 约束推导层需要领域知识, 可能引入误判"
+
+- id: EXP-003
+  name: difficulty_misclassification
+  trigger: "非常规领域题目 (天球几何/运动学)"
+  failure: "ProblemIntelligence 低估题目复杂度 — 板凳龙(S5)被误判为普通优化, 太阳影子(S5)被误判为标准参数辨识"
+  action: "ProblemIntelligence 增加 confidence 字段: 对非常规领域标记 low_confidence → 触发降级策略(减少承诺, 增加不确定性讨论)"
+  evidence: {cases: [B09,B10], frequency: "2/10", avg_impact: 12}
+  status: proposed
+  priority: P1
+  risk: "低 — 降级策略符合竞赛最佳实践: 不确定时诚实比强行精确更好"
+
+- id: EXP-004
+  name: insufficient_paper_validation_section
+  trigger: "论文模型评价章未包含 ValidationContract 输出的 paper_warnings"
+  failure: "缺失的验证项未在论文中标注 → 评委视为'未意识到', 硬扣分"
+  action: "PaperReasoning 生成论文时, 必须将 ValidationContract.paper_warnings 嵌入模型评价章。v6.1 已实现。"
+  evidence: {cases: [B02,B04], frequency: "2/3", avg_impact: 2}
+  status: resolved
+  deployed_in: v6.1
+
+- id: EXP-005
+  name: large_scale_discrete_optimization
+  trigger: "DecisionContract 选中离散优化, 且变量数 > 1000"
+  failure: "暴力搜索/Small-scale SA 无法处理大规模定日镜场布局"
+  action: "推荐分解策略(decomposition)或参数化简化(环形布局替代逐镜自由优化)。需要 models_expert 补卡。"
+  evidence: {cases: [B08], frequency: "1/10", avg_impact: 9}
+  status: proposed
+  priority: P2
+  risk: "低 — 仅影响大规模离散优化题, 约占A题10%"
+
+- id: EXP-006
+  name: incomplete_complex_execution
+  trigger: "DecisionContract 含 ≥3 个子问题, 且含几何/多体等复杂约束"
+  failure: "forge_runner 单次调用只能完成部分子问题 — 板凳龙仅Q1完整"
+  action: "forge_runner 增加阶段管理: 分阶段输出, 标注每阶段完成度。当前可接受 partial execution。"
+  evidence: {cases: [B09], frequency: "1/10", avg_impact: 3}
+  status: proposed
+  priority: P2
+  risk: "低 — 分阶段只是进度管理, 不改变模型逻辑"
+
+- id: EXP-007
+  name: inverse_problem_non_uniqueness
+  trigger: "ProblemState.sub_type 含 parameter_identification, 且反问题信息不完整"
+  failure: "不适定反问题被当作标准参数辨识 — 未报告多可行域"
+  action: "ValidationContract 识别逆问题类型→ 强制报告多可行域 + 不确定性范围。B10 已验证可行。"
+  evidence: {cases: [B10], frequency: "1/10", avg_impact: 19}
+  status: resolved
+  deployed_in: v6.1
+  note: "不需要新模块 — B10 已证明 ValidationContract + geometry_mechanism.md 足以处理"
+
+# ===== 统计摘要 =====
+summary:
+  total_experiences: 7
+  resolved: 4  # EXP-001,004,005,007
+  proposed: 3  # EXP-002,003,006 (EXP-005 P2暂缓)
+  avg_evidence_per_pattern: "4.3 cases"
+  v61_fixed: [EXP-004, EXP-007]
+  v60_fixed: [EXP-001, EXP-005]

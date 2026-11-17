@@ -1,0 +1,13 @@
+{
+  "id": "EP-EVO-002",
+  "status": "proposed",
+  "affected_skill": "model_specification",
+  "change_type": "boundary_update",
+  "description": "boundary.must_call.patterns: 时序模型必须检查独立性假设",
+  "new_rule": "ARIMA/SARIMA前必须验证平稳性和自相关性",
+  "evidence": "Detected by Reviewer+Consistency in EVO-002",
+  "pattern_id": "FP-EVO-002",
+  "reviewer": "human",
+  "sandbox_required": true,
+  "timestamp": "2026-08-08T08:32:17.320191+00:00"
+}

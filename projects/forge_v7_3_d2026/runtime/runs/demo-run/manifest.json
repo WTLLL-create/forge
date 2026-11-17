@@ -1,0 +1,24 @@
+{
+  "run_id": "demo-run",
+  "status": "PASS",
+  "workflow_id": "forge-demo",
+  "start_time": "2026-11-17T12:00:00+08:00",
+  "end_time": "2026-11-17T12:00:03+08:00",
+  "stages": [
+    {
+      "stage": "build",
+      "status": "PASS",
+      "start_time": "2026-11-17T12:00:00+08:00",
+      "end_time": "2026-11-17T12:00:03+08:00",
+      "returncode": 0,
+      "outputs": [
+        {
+          "path": "artifacts/paper.md"
+        }
+      ],
+      "logs": {
+        "stdout": "logs/build.stdout.txt"
+      }
+    }
+  ]
+}

@@ -1,0 +1,91 @@
+# argument_compiler — SkillBoundary v1.0
+# ==========================================
+# 验证样本 A1: active, L3.5, 论据编译
+
+skill_id: argument_compiler
+
+identity:
+  name: "论据编译器"
+  domain: ["paper", "reasoning"]
+  version: "v6.4"
+  description: "从 DecisionContract 编译 why_this_model + why_not_alternatives 的论文论据段落"
+
+boundary:
+  must_call:
+    - intent: model_selection_justification
+      description: "用户询问为什么选择某个模型而非其他候选方案，或要求模型选择论证"
+      patterns:
+        - "为什么.*(选择|选|用).*(而不是|而非|不选|不用)"
+        - "为什么.*(不用|不选|排除|不采用)"
+        - "(对比|比较|论证).*(选择|优劣)"
+        - "(说明|解释).*(为什么|为何).*(采用|使用|选用|选)"
+        - "(模型|方法|算法).*(决策|选择).*(理由|依据|论证)"
+        - "(justify|justification).*(model|choice|selection)"
+        - "选择.*(理由|依据|原因|论证)"
+        - "排除.*(理由|原因|依据)"
+        - "(比较|对比).*(适用性|优劣|效果|性能)"
+        - "(哪个|哪种).*(更|最).*(合适|好|优|适合)"
+      confidence: 0.92
+
+    - intent: paper_argument_generation
+      description: "用户要求生成论文中的模型论证段落"
+      patterns:
+        - "(生成|编写|写).*(论据|论证).*(段落|内容|部分)"
+        - "论文.*(为什么|为何).*(采用|使用)"
+        - "(模型论证|方法论证).*(怎么写|如何写)"
+      confidence: 0.88
+
+    - intent: alternative_elimination
+      description: "用户询问为什么排除某些候选方案"
+      patterns:
+        - "为什么.*(不用|不选|排除|不采用)"
+        - "(排除|淘汰).*(候选|方案|模型).*(原因|理由)"
+        - "为什么不.*(用|选)"
+      confidence: 0.85
+
+  avoid_call:
+    - intent: model_theory_inquiry
+      patterns:
+        - "什么是.*(TOPSIS|AHP|随机森林|NSGA)"
+        - "解释.*(公式|原理|算法).*(步骤|流程)"
+        - "(K-means|SVM|LSTM).*(定义|概念|介绍)"
+      reason: "纯知识查询，应由 knowledge/models_expert/ 或 LLM 直接回答，不需要编译论据"
+
+    - intent: model_implementation
+      patterns:
+        - "(怎么|如何).*(实现|编码|编程|调参)"
+        - "(代码|程序|脚本).*(怎么写|如何写)"
+      reason: "代码实现问题，非论文论据编译"
+
+capability:
+  input:
+    required:
+      - DecisionContract
+    optional:
+      - ProblemState
+      - ModelResult
+    schema_ref: "forge-v6/decision-contract/v1"
+  output:
+    type: "CompiledArgument"
+    description: "两个自然段落: (1) 为什么选此模型; (2) 为什么不选候选模型。含引用链指向 DecisionContract.reasoning。"
+
+decision:
+  confidence_threshold: 0.80
+  priority: 7
+  fallback: "none"
+
+dependency:
+  upstream:
+    - "expert_decision"
+  downstream:
+    - "section_generator"
+    - "abstract_compiler"
+
+lifecycle:
+  state: active
+  since: "2026-08-04"
+  owner: "L3.5 Decision→Paper Bridge"
+  evolved_from: "v5 manual argument writing"
+  known_gaps:
+    - "仅消费 DecisionContract 的 reasoning 字段，未使用 paper_case_library 中的高分论据模式"
+    - "不检测论据之间的逻辑矛盾"

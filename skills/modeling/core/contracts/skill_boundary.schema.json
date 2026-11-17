@@ -1,0 +1,265 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "forge-v6/skill-boundary/v1",
+  "title": "SkillBoundary — 技能边界合约 v1.0",
+  "description": "定义 Forge v6.5 Skill Governance 中每个技能的触发边界、能力契约、依赖关系和生命周期。被 Invocation Gate、Skill Registry、Router、Benchmark 和 FailureMemory 共同消费。",
+  "type": "object",
+  "required": ["skill_id", "identity", "boundary", "capability", "decision", "lifecycle"],
+  "properties": {
+
+    "skill_id": {
+      "type": "string",
+      "description": "全局唯一技能标识符。与 skill_runtime_registry.yaml 中的 key 一致。",
+      "pattern": "^[a-z][a-z0-9_]+$",
+      "examples": ["argument_compiler", "model_specification", "quality_gate"]
+    },
+
+    "identity": {
+      "type": "object",
+      "required": ["name", "domain", "version"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "技能的人类可读名称",
+          "examples": ["论据编译器", "模型规格化器", "论文质量门禁"]
+        },
+        "domain": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "prediction",
+              "optimization",
+              "evaluation",
+              "classification",
+              "clustering",
+              "simulation",
+              "statistics",
+              "physics",
+              "paper",
+              "governance",
+              "reasoning",
+              "visualization",
+              "data",
+              "review"
+            ]
+          },
+          "minItems": 1,
+          "description": "技能所属的能力域，可跨域。用于 Router 的领域过滤。"
+        },
+        "version": {
+          "type": "string",
+          "description": "技能自身版本号，独立于系统版本",
+          "pattern": "^v\\d+\\.\\d+(\\.\\d+)?$",
+          "examples": ["v1.0", "v6.4"]
+        },
+        "description": {
+          "type": "string",
+          "description": "一句话描述技能做什么（不是怎么做）",
+          "maxLength": 200
+        }
+      }
+    },
+
+    "boundary": {
+      "type": "object",
+      "required": ["must_call", "avoid_call"],
+      "description": "定义技能的调用和非调用边界。此段是 Invocation Gate 的核心输入。",
+      "properties": {
+        "must_call": {
+          "type": "array",
+          "minItems": 1,
+          "description": "必须调用此技能的场景。每个条目定义一个意图模式。",
+          "items": {
+            "type": "object",
+            "required": ["intent", "patterns", "confidence"],
+            "properties": {
+              "intent": {
+                "type": "string",
+                "description": "用户意图的语义标签，供 Router 进行意图匹配",
+                "examples": ["model_selection_justification", "model_formalization", "paper_quality_check"]
+              },
+              "description": {
+                "type": "string",
+                "description": "人类可读的场景描述",
+                "maxLength": 300
+              },
+              "patterns": {
+                "type": "array",
+                "items": { "type": "string" },
+                "minItems": 1,
+                "maxItems": 10,
+                "description": "触发模式列表。支持关键词、正则表达式或语义模式。必须足够精确以避免误触发。",
+                "examples": [
+                  "为什么选择.*(模型|方法|算法).*(而不是|而非|不选)",
+                  "分析.*题.*应该.*使用.*什么.*模型"
+                ]
+              },
+              "confidence": {
+                "type": "number",
+                "minimum": 0.0,
+                "maximum": 1.0,
+                "description": "此模式独立触发时的置信度。多个模式匹配时 Router 取 max。"
+              }
+            }
+          }
+        },
+        "avoid_call": {
+          "type": "array",
+          "description": "明确不应调用此技能的场景。用于降低误触发率。",
+          "items": {
+            "type": "object",
+            "required": ["intent", "reason"],
+            "properties": {
+              "intent": {
+                "type": "string",
+                "description": "不应触发的意图标签"
+              },
+              "patterns": {
+                "type": "array",
+                "items": { "type": "string" },
+                "description": "排除模式。匹配任一即不触发此技能，即使 must_call 也匹配。",
+                "examples": ["什么是.*(K-means|随机森林|NSGA)", "解释.*(公式|原理|定义)"]
+              },
+              "reason": {
+                "type": "string",
+                "description": "为什么不调用：是纯知识查询？还是应由其他技能处理？",
+                "maxLength": 200
+              }
+            }
+          }
+        }
+      }
+    },
+
+    "capability": {
+      "type": "object",
+      "required": ["input", "output"],
+      "description": "技能的输入输出契约。供 Runner 在执行前验证数据可用性。",
+      "properties": {
+        "input": {
+          "type": "object",
+          "required": ["required"],
+          "properties": {
+            "required": {
+              "type": "array",
+              "items": { "type": "string" },
+              "minItems": 1,
+              "description": "必填输入字段名。Runner 在执行前检查这些字段是否存在且非空。",
+              "examples": [["problem_text", "problem_type"], ["DecisionContract", "ModelResult"]]
+            },
+            "optional": {
+              "type": "array",
+              "items": { "type": "string" },
+              "description": "可选输入字段。存在则增强输出，不存在不影响基本功能。"
+            },
+            "schema_ref": {
+              "type": "string",
+              "description": "输入的 JSON Schema $id。用于结构化验证。",
+              "examples": ["forge-v6/decision-contract/v1", "forge-v6/problem-state/v1"]
+            }
+          }
+        },
+        "output": {
+          "type": "object",
+          "required": ["type"],
+          "properties": {
+            "type": {
+              "type": "string",
+              "description": "输出类型名。供下游技能匹配。",
+              "examples": ["CompiledArgument", "ModelSpecification", "GateReport"]
+            },
+            "schema_ref": {
+              "type": "string",
+              "description": "输出的 JSON Schema $id（如果有）",
+              "examples": ["forge-v6/paper-section/v1"]
+            },
+            "description": {
+              "type": "string",
+              "description": "输出内容的结构化描述",
+              "maxLength": 300
+            }
+          }
+        }
+      }
+    },
+
+    "decision": {
+      "type": "object",
+      "required": ["confidence_threshold", "priority"],
+      "description": "Router 和 Gate 的决策参数。",
+      "properties": {
+        "confidence_threshold": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0,
+          "description": "Gate 拦截阈值。当 Router 返回的匹配置信度 >= 此值，必须调用此技能，禁止 LLM 自由回答。"
+        },
+        "priority": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 10,
+          "description": "Router 排序优先级。同置信度时 priority 高的技能优先被选中。10 = 最高。"
+        },
+        "fallback": {
+          "type": "string",
+          "description": "当此技能不可用（state != active）时的替代技能 skill_id。'none' 表示无替代，允许自由回答。",
+          "pattern": "^[a-z][a-z0-9_]+$|^none$",
+          "default": "none"
+        }
+      }
+    },
+
+    "dependency": {
+      "type": "object",
+      "description": "技能间的依赖关系。供 Router 在编排多技能链时检查可执行性。",
+      "properties": {
+        "upstream": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "此技能执行前必须已完成的技能 skill_id 列表。如果上游 state != active，此技能降级为 partial。",
+          "examples": [["paper_structure"], ["DecisionContract", "problem_intelligence"]]
+        },
+        "downstream": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "依赖此技能输出的下游技能。纯文档字段，供影响分析使用。"
+        }
+      }
+    },
+
+    "lifecycle": {
+      "type": "object",
+      "required": ["state"],
+      "description": "技能的治理生命周期。由 Evolution Controller 管理状态转换。",
+      "properties": {
+        "state": {
+          "type": "string",
+          "enum": ["active", "partial", "not_connected", "deprecated", "sandbox"],
+          "description": "当前生命周期状态。active=可被 Gate 拦截调用, partial=可被建议但不可强制, not_connected=注册但不可调用, deprecated=待归档, sandbox=试验中"
+        },
+        "since": {
+          "type": "string",
+          "description": "进入当前状态的日期",
+          "format": "date",
+          "examples": ["2026-08-04"]
+        },
+        "owner": {
+          "type": "string",
+          "description": "负责此技能演进的责任人/组件",
+          "examples": ["ExpertDecision", "PaperCompiler", "Governance"]
+        },
+        "evolved_from": {
+          "type": "string",
+          "description": "此技能从哪个旧版本演进而来（用于 genealogy 追踪）"
+        },
+        "known_gaps": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "已知的能力缺口。用于 Benchmark 生成测试用例时的关注点。"
+        }
+      }
+    }
+
+  }
+}

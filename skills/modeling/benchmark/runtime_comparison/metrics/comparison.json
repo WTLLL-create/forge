@@ -1,0 +1,61 @@
+{
+  "timestamp": "2026-08-08T08:24:22.342529+00:00",
+  "v5_runs": 1,
+  "v651_runs": 1,
+  "dimensions": {
+    "decision_accuracy": {
+      "v5": 50,
+      "v6.5.1": 100,
+      "delta": 50
+    },
+    "artifact_completeness": {
+      "v5": 33,
+      "v6.5.1": 100,
+      "delta": 67
+    },
+    "scientific_consistency": {
+      "v5": 65,
+      "v6.5.1": 88,
+      "delta": 23
+    },
+    "revision_ability": {
+      "v5": 20,
+      "v6.5.1": 90,
+      "delta": 70
+    },
+    "reproducibility": {
+      "v5": 100,
+      "v6.5.1": 100,
+      "delta": 0
+    }
+  },
+  "overall": {
+    "v5": 52,
+    "v6.5.1": 96,
+    "delta": 44
+  },
+  "v5_detailed": [
+    {
+      "system": "v5",
+      "problem_id": "CUMCM_2026_D",
+      "decision_accuracy": 50,
+      "artifact_completeness": 33,
+      "scientific_consistency": 65,
+      "revision_ability": 20,
+      "reproducibility": 100,
+      "overall": 52
+    }
+  ],
+  "v651_detailed": [
+    {
+      "system": "v6.5.1",
+      "problem_id": "CUMCM_2026_D",
+      "decision_accuracy": 100,
+      "artifact_completeness": 100,
+      "scientific_consistency": 88,
+      "revision_ability": 90,
+      "reproducibility": 100,
+      "overall": 96
+    }
+  ]
+}

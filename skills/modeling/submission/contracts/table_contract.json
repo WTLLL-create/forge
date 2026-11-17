@@ -1,0 +1,37 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "TableArtifact",
+  "description": "表格Artifact — 从Markdown表格升级为结构化三线表。【2026-09-08 SUPERSEDED/LEGACY-ONLY】本契约仅被 core/runtime/legacy/table_compiler.py 读取，不属于 v9 生产链；论文成稿表格的唯一依据是 standards/academic_table_standard.md 与每篇论文锁定的 table_spec.json。其中 alignment 默认 center、purpose=prove_model_superiority、score_dimension 评分维度均已废止，不得用于新产出。",
+  "type": "object",
+  "required": ["id", "caption", "headers", "rows", "style"],
+  "properties": {
+    "id": {"type": "string", "pattern": "^TABLE_\\d+_\\d+$", "description": "如 TABLE_5_1"},
+    "caption": {"type": "string", "description": "表标题，如 '表5-1 动力学模型参数'"},
+    "purpose": {"type": "string", "description": "该表服务的Claim，如 'prove_model_superiority'"},
+    "headers": {
+      "type": "array",
+      "items": {"type": "object", "properties": {"text": {"type": "string"}, "unit": {"type": "string"}}},
+      "description": "表头列定义"
+    },
+    "rows": {
+      "type": "array",
+      "items": {"type": "array", "items": {"type": ["string", "number", "null"]}},
+      "description": "数据行"
+    },
+    "style": {
+      "type": "object",
+      "required": ["type"],
+      "properties": {
+        "type": {"type": "string", "enum": ["three_line"], "default": "three_line"},
+        "top_border_pt": {"type": "number", "default": 1.5},
+        "header_border_pt": {"type": "number", "default": 0.75},
+        "bottom_border_pt": {"type": "number", "default": 1.5},
+        "vertical_borders": {"type": "boolean", "default": false},
+        "font_size_pt": {"type": "number", "default": 10.5},
+        "alignment": {"type": "string", "enum": ["center", "left"], "default": "center"}
+      }
+    },
+    "evidence_link": {"type": "string", "description": "关联的Evidence ID"},
+    "score_dimension": {"type": "string", "enum": ["D1","D2","D3","D4","D5","D6"]}
+  }
+}

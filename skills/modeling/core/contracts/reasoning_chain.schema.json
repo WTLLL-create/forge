@@ -1,0 +1,56 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "forge-v7/reasoning-chain/v1",
+  "title": "ReasoningChain — 科学推理链合同 v1.0",
+  "description": "连接 EvidenceGraph 和最终 Claim 的逻辑推理层。定义 premise→evidence→logic→conclusion 的完整推理结构。",
+  "type": "object",
+  "required": ["chain_id", "claim_id", "premises", "inferences", "conclusion"],
+  "properties": {
+    "chain_id": {"type": "string"},
+    "claim_id": {"type": "string"},
+    "scoring_dimension": {"type": "string"},
+    "premises": {"type": "array", "items": {"$ref": "#/$defs/premise"}},
+    "inferences": {"type": "array", "items": {"$ref": "#/$defs/inference"}},
+    "conclusion": {"$ref": "#/$defs/conclusion_node"},
+    "confidence": {"type": "number", "minimum": 0, "maximum": 1},
+    "chain_completeness": {"type": "object", "properties": {
+      "premises_complete": {"type": "boolean"},
+      "inferences_valid": {"type": "boolean"},
+      "evidence_linked": {"type": "boolean"},
+      "overall": {"type": "string", "enum": ["complete", "partial", "broken"]}
+    }}
+  },
+  "$defs": {
+    "premise": {
+      "type": "object",
+      "required": ["premise_id", "statement"],
+      "properties": {
+        "premise_id": {"type": "string"},
+        "statement": {"type": "string"},
+        "type": {"type": "string", "enum": ["data_feature", "model_property", "problem_constraint", "prior_knowledge"]},
+        "evidence_ref": {"type": "string", "description": "支撑此前提的证据 Artifact ID"}
+      }
+    },
+    "inference": {
+      "type": "object",
+      "required": ["inference_id", "from_premises", "to_conclusion", "logic"],
+      "properties": {
+        "inference_id": {"type": "string"},
+        "from_premises": {"type": "array", "items": {"type": "string"}, "description": "推理起点 (premise IDs)"},
+        "to_conclusion": {"type": "string", "description": "推理终点"},
+        "logic": {"type": "string", "enum": ["deductive", "inductive", "abductive", "analogical"]},
+        "evidence_ref": {"type": "string"},
+        "fallacy_risk": {"type": "string", "enum": ["none", "correlation_not_causation", "overgeneralization", "unverified_assumption", "missing_control"]}
+      }
+    },
+    "conclusion_node": {
+      "type": "object",
+      "required": ["statement"],
+      "properties": {
+        "statement": {"type": "string"},
+        "strength": {"type": "string", "enum": ["proven", "strongly_supported", "moderately_supported", "weak"]},
+        "limitations": {"type": "array", "items": {"type": "string"}}
+      }
+    }
+  }
+}

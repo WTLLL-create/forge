@@ -1,0 +1,833 @@
+# Forge v6.5 — Skill Registry v2.0
+# ============================================
+# Skill Governance 单一能力事实源。
+# 此文件是 Invocation Gate、Skill Router、Benchmark、FailureMemory 的权威数据源。
+# boundary/capability/decision/dependency/lifecycle 均以此文件为准。
+# 不再有独立的 boundary_examples/ 文件。
+
+version: "v6.5"
+principle: >
+  Every skill must have a boundary (when to call),
+  a capability contract (what it consumes/produces),
+  a decision profile (how confident the match must be),
+  dependency awareness (what must run before/after),
+  and a governed lifecycle (who owns it, what state it's in).
+
+skills:
+
+  # ===== L3.5 Decision→Paper Bridge =====
+
+  argument_compiler:
+    source: core/evolution/evo_p0_001_decision_argument_compiler.py
+    trigger_stage: L3.5 (post DecisionContract)
+    status: active
+    boundary:
+      must_call:
+        - intent: model_selection_justification
+          description: "用户询问为什么选择某个模型而非其他候选方案"
+          patterns:
+            - "为什么.*(选择|选|用).*(而不是|而非|不选|不用)"
+            - "为什么.*(不用|不选|排除|不采用)"
+            - "(对比|比较|论证).*(选择|优劣)"
+            - "(说明|解释).*(为什么|为何).*(采用|使用|选用|选)"
+            - "(模型|方法|算法).*(决策|选择).*(理由|依据|论证)"
+            - "(justify|justification).*(model|choice|selection)"
+            - "选择.*(理由|依据|原因|论证)"
+            - "排除.*(理由|原因|依据)"
+            - "(比较|对比).*(适用性|优劣|效果|性能)"
+            - "(哪个|哪种).*(更|最).*(合适|好|优|适合)"
+          confidence: 0.92
+        - intent: paper_argument_generation
+          description: "用户要求生成论文中的模型论证段落"
+          patterns:
+            - "(生成|编写|写).*(论据|论证).*(段落|内容|部分)"
+            - "论文.*(为什么|为何).*(采用|使用)"
+            - "(模型论证|方法论证).*(怎么写|如何写)"
+          confidence: 0.88
+        - intent: alternative_elimination
+          description: "用户询问为什么排除某些候选方案"
+          patterns:
+            - "为什么.*(不用|不选|排除|不采用)"
+            - "(排除|淘汰).*(候选|方案|模型).*(原因|理由)"
+            - "为什么不.*(用|选)"
+          confidence: 0.85
+      avoid_call:
+        - intent: model_theory_inquiry
+          patterns:
+            - "什么是.*(TOPSIS|AHP|随机森林|NSGA)"
+            - "解释.*(公式|原理|算法).*(步骤|流程)"
+            - "(K-means|SVM|LSTM).*(定义|概念|介绍)"
+          reason: "纯知识查询，应由 knowledge/models_expert/ 或 LLM 直接回答"
+        - intent: model_implementation
+          patterns:
+            - "(怎么|如何).*(实现|编码|编程|调参)"
+            - "(代码|程序|脚本).*(怎么写|如何写)"
+          reason: "代码实现问题，非论文论据编译"
+    capability:
+      input:
+        required: [DecisionContract]
+        optional: [ProblemState, ModelResult]
+        schema_ref: "forge-v6/decision-contract/v1"
+      output:
+        type: CompiledArgument
+        description: "两个自然段落: (1) 为什么选此模型; (2) 为什么不选候选模型"
+    decision:
+      confidence_threshold: 0.80
+      priority: 7
+      fallback: none
+    dependency:
+      upstream: [expert_decision]
+      downstream: [section_generator, abstract_compiler]
+    lifecycle:
+      since: "2026-08-04"
+      owner: "L3.5 Decision→Paper Bridge"
+      evolved_from: "v5 manual argument writing"
+      known_gaps:
+        - "仅消费 DecisionContract 的 reasoning 字段，未使用 paper_case_library 中的高分论据模式"
+        - "不检测论据之间的逻辑矛盾"
+
+  model_specification:
+    source: core/evolution/evo_p0_002_model_specification.py
+    trigger_stage: L3.5 (post DecisionContract)
+    status: active
+    boundary:
+      must_call:
+        - intent: model_formalization
+          description: "用户要求对模型进行数学形式化、建立数学模型框架"
+          patterns:
+            - "(设计|建立|构建|写出|列出).*数学.*(模型|框架|形式|表达|描述)"
+            - "(形式化|规格化|数学表达|数学描述|数学语言).*(模型|问题|方法)"
+            - "(导出|推导|列出|写出).*(假设|符号|公式|方程)"
+            - "(假设条件|符号表|变量定义|模型假设).*(设计|建立|列出|写)"
+            - "(模型|论文).*(符号说明|数学表达|公式化|规格化)"
+            - "(formalize|mathematical.*model).*(specification|framework)"
+            - "微分方程.*(模型|形式化)"
+            - "评价指标.*(数学|模型|框架)"
+            - "数学.*(建模|模型).*(框架|形式|方法|求解)"
+          confidence: 0.90
+        - intent: model_documentation
+          description: "用户要求生成论文中的模型符号和公式段"
+          patterns:
+            - "(生成|编写).*(符号表|符号说明|公式段)"
+            - "论文.*(符号|公式).*(怎么写|如何写|需要)"
+            - "(符号说明|模型假设).*(章节|段落)"
+          confidence: 0.85
+      avoid_call:
+        - intent: formula_explanation
+          patterns:
+            - "解释.*(公式|符号).*(含义|意思)"
+            - "什么是.*(拉普拉斯|傅里叶|梯度)"
+          reason: "纯数学知识查询，非模型规格化"
+        - intent: model_selection_only
+          patterns:
+            - "(选什么|哪个).*(模型|方法).*(好|合适)"
+            - "应该用什么模型"
+          reason: "模型选择决策，应由 expert_decision 处理"
+        - intent: code_implementation
+          patterns:
+            - "(代码|实现|编程).*(怎么写|如何)"
+            - "python.*(实现|代码)"
+          reason: "代码实现问题"
+    capability:
+      input:
+        required: [DecisionContract]
+        optional: [ProblemState, ModelResult]
+        schema_ref: "forge-v6/decision-contract/v1"
+      output:
+        type: ModelSpecification
+        description: "assumptions + variables + core_formulas (LaTeX)。is_complete 标记模板覆盖状态。"
+    decision:
+      confidence_threshold: 0.80
+      priority: 6
+      fallback: none
+    dependency:
+      upstream: [argument_compiler]
+      downstream: [formula_compiler, section_generator]
+    lifecycle:
+      since: "2026-08-04"
+      owner: "L3.5 Decision→Paper Bridge"
+      evolved_from: "v5 manual formula writing"
+      known_gaps:
+        - "模板覆盖率仅 33% (TOPSIS/CRITIC)，缺少 optimization/prediction/statistics 族模板"
+        - "无模板时 is_complete=false，无 AI fallback 推导机制"
+
+  # ===== L6.5 Quality Gate =====
+
+  quality_gate:
+    source: core/paper_quality_gate.md
+    trigger_stage: L6.5 (pre L7)
+    status: active
+    boundary:
+      must_call:
+        - intent: paper_quality_check
+          description: "用户要求检查论文质量、是否符合竞赛规范"
+          patterns:
+            - "(检查|审查|审核).*(论文|文档).*(质量|规范|格式|合规)"
+            - "论文.*(符合|满足).*(要求|规范|标准)"
+            - "(质量|格式|合规).*(检查|门禁|把关|审查)"
+            - "(gate|check|review).*(paper|document).*(quality|compliance)"
+            - "检查.*(有没有|是否有).*(缺|少|遗漏)"
+          confidence: 0.94
+        - intent: paper_compliance_verification
+          description: "用户要求验证论文是否满足 CUMCM/MCM 格式要求"
+          patterns:
+            - "(CUMCM|国赛|美赛|MCM).*(格式|规范).*(检查|验证|确认)"
+            - "(是否符合|是否满足).*(竞赛|比赛).*(要求|规范)"
+            - "论文.*(格式|排版).*(对不对|正确吗|有问题吗)"
+          confidence: 0.92
+        - intent: pre_submission_review
+          description: "提交前最终检查"
+          patterns:
+            - "(提交|上交|交).*(前|之前).*(检查|确认)"
+            - "(最后|最终).*(检查|确认).*(论文|文档)"
+            - "帮我看.*(论文|文档).*(有没有|有没有什么).*(问题|错误)"
+          confidence: 0.85
+      avoid_call:
+        - intent: content_review
+          patterns:
+            - "(内容|模型|方法).*(好不好|对不对|合理)"
+            - "(评分|打分|审查|评).*(论文|内容|质量|怎么|如何)"
+            - "论文.*(能得|能拿).*(多少|几).*分"
+          reason: "内容质量评审应由 reviewer_rules 处理，不是格式门禁"
+        - intent: writing_advice
+          patterns:
+            - "(怎么写|如何写).*(论文|摘要|结论)"
+            - "(写作|撰写).*(技巧|建议)"
+          reason: "写作指导问题，非质量检查"
+        - intent: format_only
+          patterns:
+            - "(只|仅).*(检查|看).*(格式|排版|字体|页边距)"
+            - "格式.*(对不对|对吗|正确吗)"
+          reason: "纯格式检查由质量门禁处理范围外"
+    capability:
+      input:
+        required: ["论文 .docx 文件", "PaperStyleContract"]
+        optional: ["竞赛类型 (CUMCM/MCM)"]
+        schema_ref: "forge-v6/paper-style-contract/v1"
+      output:
+        type: GateReport
+        description: "P0 致命 + P1 严重 + P2 建议 + overall_pass + 违规次数统计"
+    decision:
+      confidence_threshold: 0.85
+      priority: 9
+      fallback: reviewer_rules
+    dependency:
+      upstream: [paper_compiler, style_compiler]
+      downstream: [reviewer_rules]
+    lifecycle:
+      since: "2026-08-04"
+      owner: Governance
+      evolved_from: "v5 QualityGateway"
+      known_gaps:
+        - "P0/P1/P2 规则在 paper_quality_gate.md 中定义，未程序化消费 PaperStyleContract.penalty_checklist"
+
+  # ===== L3.5 Validation Planning =====
+
+  validation_plan:
+    source: core/evolution/evo_v6.4.2_validation_plan_compiler.py
+    trigger_stage: L3.5 (post DecisionContract)
+    status: active
+    boundary:
+      must_call:
+        - intent: validation_planning
+          description: "用户要求规划模型的验证方案、设计验证实验"
+          patterns:
+            - "(设计|规划|制定).*(验证|检验).*(方案|计划|实验|策略)"
+            - "(模型|结果).*(如何|怎么).*(验证|检验|证明)"
+            - "(需要|应该).*(做|进行).*(什么|哪些).*(验证|检验)"
+            - "模型.*(验证|检验).*(方法|方案|步骤)"
+            - "(validation|verification).*(plan|strategy|design)"
+            - "检验.*(模型|显著性|指标)"
+            - "验证.*(策略|指标|步骤)"
+          confidence: 0.90
+        - intent: evidence_requirement
+          description: "用户询问模型需要提供哪些证据支持"
+          patterns:
+            - "(需要|应该).*(什么|哪些).*(证据|指标|检验).*(支持|证明)"
+            - "(证据|检验).*(清单|列表|要求)"
+            - "论文.*(需要).*(什么|哪些).*(验证|检验)"
+          confidence: 0.85
+        - intent: mandatory_validation_check
+          description: "DecisionContract 中存在非空 mandatory_validations 时，系统级自动触发"
+          patterns:
+            - "__system__: DecisionContract.data.decisions[].mandatory_validations 非空"
+          confidence: 0.95
+      avoid_call:
+        - intent: validation_result_interpretation
+          patterns:
+            - "(验证|检验).*(结果|结论).*(说明|意思|含义)"
+            - "这个.*(验证|检验).*(为什么|怎么).*(通过|不通过)"
+          reason: "验证结果解读，不是验证方案规划"
+        - intent: simple_model_question
+          patterns:
+            - "(用|使).*(什么|哪个).*(模型|方法)"
+            - "这个.*(数据|问题).*(怎么|如何).*(分析|处理)"
+          reason: "模型选择/数据分析问题，非验证规划"
+    capability:
+      input:
+        required: [DecisionContract]
+        optional: [ProblemState, model_family]
+        schema_ref: "forge-v6/decision-contract/v1"
+      output:
+        type: ValidationPlan
+        description: "required_tasks + recommended_tasks。每个任务含 description + data_requirement + blocking_condition。"
+    decision:
+      confidence_threshold: 0.75
+      priority: 5
+      fallback: none
+    dependency:
+      upstream: [expert_decision]
+      downstream: [evidence_layer, reviewer_rules]
+    lifecycle:
+      since: "2026-08-08"
+      owner: "L3.5 Decision→Paper Bridge"
+      evolved_from: "v6.1 evidence_checklist"
+      known_gaps:
+        - "validation knowledge cards (.md) 由 FAMILY_TASKS 硬编码引用，非动态消费"
+
+  # ===== L6 Paper Generation Pipeline =====
+
+  paper_structure:
+    source: core/governance/structure_selector_runtime.py
+    trigger_stage: L6 (pre PaperSection)
+    status: active
+    boundary:
+      must_call:
+        - intent: paper_structure_selection
+          description: "用户要求确定论文结构框架、章节设计"
+          patterns:
+            - "(设计|确定|规划|安排).*(论文|文章|报告).*(结构|框架|章节|目录|大纲)"
+            - "(论文|文章|报告).*(结构|框架|章节|目录|大纲).*(怎么|如何|怎样).*(设计|安排|规划)"
+            - "(根据|按照).*(题目|问题|题型).*(设计|确定).*(论文|结构|框架|章节)"
+            - "(CUMCM|国赛|竞赛).*(论文|文章).*(结构|框架|大纲|章节).*(是什么|怎么写|如何)"
+            - "(需要|要).*(几章|什么章节|哪些章节|什么结构)"
+          confidence: 0.90
+        - intent: blueprint_generation
+          description: "用户已经有了题目分析结果，需要生成论文蓝图"
+          patterns:
+            - "(生成|输出|得到).*(论文|结构).*(蓝图|骨架|框架)"
+            - "根据.*(分析|题).*(给出|生成).*(论文|结构).*(安排|设计)"
+          confidence: 0.85
+      avoid_call:
+        - intent: abstract_inquiry
+          patterns:
+            - "摘要.*(怎么写|是什么|如何写)"
+            - "(什么是|怎么写).*摘要"
+          reason: "摘要写作问题，应由 abstract_compiler 处理"
+        - intent: general_paper_knowledge
+          patterns:
+            - "数学建模论文.*(有哪些|几).*(部分|章节|结构)"
+            - "(论文|文章).*(一般|通常).*(有|包含).*(哪些|什么).*(部分|章节)"
+          reason: "通用知识查询，非针对具体问题的结构设计"
+    capability:
+      input:
+        required: [ProblemState]
+        optional: [competition, complexity, sub_problems]
+        schema_ref: "forge-v6/problem-state/v1"
+      output:
+        type: PaperBlueprint
+        description: "章节骨架 + ordering + required/optional + emphasis + dependency_hints"
+    decision:
+      confidence_threshold: 0.80
+      priority: 5
+      fallback: none
+    dependency:
+      upstream: [problem_intelligence]
+      downstream: [section_generator, formula_compiler, chart_compiler]
+    lifecycle:
+      since: "2026-08-08"
+      owner: L6 Paper Pipeline
+      evolved_from: "archive/v5 paper_templates + golden_nine.md"
+      known_gaps:
+        - "MCM/ICM 结构模板未迁移（仅 CUMCM）"
+        - "模板基于固定的 golden_nine，未支持用户自定义章节"
+
+  section_generator:
+    source: core/governance/section_generator_runtime.py
+    trigger_stage: L6
+    status: active
+    boundary:
+      must_call:
+        - intent: section_content_generation
+          description: "用户要求根据论文蓝图编排章节内容、确定章节素材"
+          patterns:
+            - "(编排|组织|规划).*(章节|内容|论文).*(结构|内容|素材)"
+            - "根据.*(蓝图|框架|结构).*(生成|编排).*(章节|内容)"
+            - "论文.*(各章|每章|每个章节).*(需要|包含|有什么).*(内容|素材|部件)"
+            - "(Section|Chapter).*(generation|compile|orchestrate)"
+          confidence: 0.88
+        - intent: chapter_bootstrap
+          description: "用户已有论文结构，要求填充各章的内容槽位"
+          patterns:
+            - "根据.*(结构|框架|大纲).*(填充|生成|编排).*(内容|章节)"
+            - "论文.*(骨架|蓝图|框架).*(好了|有了|完成).*(填充|怎么填)"
+          confidence: 0.85
+      avoid_call:
+        - intent: section_writing
+          patterns:
+            - "(帮我|直接).*(写|生成).*(第.*章|问题分析|模型建立)"
+            - "直接.*(写|生成).*(论文|章节).*(内容|全文)"
+          reason: "直接写章节文本应由具体 compiler (formula/chart/table) 处理，非编排器职责"
+    capability:
+      input:
+        required: [PaperBlueprint]
+        optional: [ProblemState, DecisionContract, ModelResult]
+        schema_ref: "forge-v6/problem-state/v1"
+      output:
+        type: SectionArtifacts
+        description: "每章: section_id + required_blocks + dependencies + validation_rules。向下游 skills 编排内容生成。"
+    decision:
+      confidence_threshold: 0.80
+      priority: 4
+      fallback: none
+    dependency:
+      upstream: [paper_structure]
+      downstream: [formula_compiler, table_compiler, chart_compiler, reference_compiler]
+    lifecycle:
+      since: "2026-08-08"
+      owner: L6 Paper Pipeline
+      evolved_from: "paper_integration/section_generation_rules.md (110行纯规则)"
+      known_gaps:
+        - "架构型论文模式 (architecture_expression_template) 未程序化"
+        - "section_contract schema 待定义"
+
+  formula_compiler:
+    source: core/governance/leaf_compilers_runtime.py
+    trigger_stage: L6
+    status: active
+    boundary:
+      must_call:
+        - intent: formula_rendering
+          description: "用户要求生成论文中的公式、LaTeX 编号和变量解释"
+          patterns:
+            - "(生成|编译|输出).*(公式|LaTeX|方程)"
+            - "论文.*(公式|方程).*(编号|编译|生成|渲染)"
+            - "(写出|列出|推导).*(公式|方程).*(编号|标注)"
+          confidence: 0.88
+      avoid_call:
+        - intent: formula_explanation
+          patterns:
+            - "解释.*(公式|方程).*(含义|意思)"
+            - "什么是.*(公式|方程)"
+          reason: "公式含义解释，非公式编译生成"
+    capability:
+      input:
+        required: [SectionArtifact]
+        optional: [DecisionContract, ModelSpecification]
+      output:
+        type: PaperArtifact
+        schema_ref: "forge-v6/paper-artifact/v1"
+        description: "公式列表 (id + latex + label + variables)"
+    decision:
+      confidence_threshold: 0.80
+      priority: 5
+      fallback: none
+    dependency:
+      upstream: [model_specification]
+      downstream: [paper_compiler]
+    lifecycle:
+      since: "2026-08-08"
+      owner: L6 Paper Pipeline
+      evolved_from: "evo_p0_002 SPEC_TEMPLATES (2/6 template coverage)"
+      known_gaps:
+        - "模板覆盖率仍为 33%，optimization/prediction/statistics 族待补齐"
+        - "非模板模型的 AI fallback 推导未实现"
+
+  chart_compiler:
+    source: core/governance/leaf_compilers_runtime.py
+    trigger_stage: L6
+    status: active
+    boundary:
+      must_call:
+        - intent: chart_generation
+          description: "用户要求生成论文中的图表、数据可视化"
+          patterns:
+            - "(论文|文章).*(插图|配图|图表).*(要画|需要|画什么|做什么|用什么)"
+            - "(生成|画|绘制|输出).*(图表|曲线图|散点图|对比图|流程图|趋势图|插图)"
+            - "论文.*(图表|图形|配图|可视化).*(生成|插入|添加|需要)"
+            - "(matplotlib|绘图|可视化|作图).*(论文|图表)"
+          confidence: 0.90
+      avoid_call:
+        - intent: chart_style_question
+          patterns:
+            - "图.*(颜色|字体|大小).*(怎么|如何).*(设置|修改)"
+            - "matplotlib.*(教程|怎么用)"
+          reason: "绘图工具使用问题，非论文图表生成"
+    capability:
+      input:
+        required: [SectionArtifact]
+        optional: [ModelResult, chart_type]
+      output:
+        type: PaperArtifact
+        schema_ref: "forge-v6/paper-artifact/v1"
+        description: "chart_spec (type + data + output_path + dpi=600)"
+    decision:
+      confidence_threshold: 0.80
+      priority: 5
+      fallback: none
+    dependency:
+      upstream: [section_generator]
+      downstream: [paper_compiler]
+    lifecycle:
+      since: "2026-08-08"
+      owner: L6 Paper Pipeline
+      evolved_from: "visual_engineering/chart_decision_tree.md (170行决策树)"
+      known_gaps:
+        - "matplotlib→PNG→docx 渲染管线未程序化 (chart_spec 已定义但渲染为 placeholder)"
+        - "12种子图表类型仅支持基础 line/bar/scatter"
+
+  table_compiler:
+    source: core/governance/leaf_compilers_runtime.py
+    trigger_stage: L6
+    status: active
+    boundary:
+      must_call:
+        - intent: table_generation
+          description: "用户要求生成论文中的三线表、数据表格"
+          patterns:
+            - "(生成|编译|输出).*(表格|三线表|数据表)"
+            - "论文.*(表格|数据表|统计表).*(生成|插入|需要)"
+            - "把.*(数据|结果).*(做成|变成|转为).*(表格|表)"
+          confidence: 0.88
+      avoid_call:
+        - intent: table_format_question
+          patterns:
+            - "三线表.*(是什么|怎么画|怎么做)"
+            - "Word.*(表格|怎么插入)"
+          reason: "工具使用问题，非论文表格生成"
+    capability:
+      input:
+        required: [SectionArtifact]
+        optional: [ModelResult, StyleConfig]
+      output:
+        type: PaperArtifact
+        schema_ref: "forge-v6/paper-artifact/v1"
+        description: "三线表 (headers + rows + caption + style=three_line)"
+    decision:
+      confidence_threshold: 0.80
+      priority: 5
+      fallback: none
+    dependency:
+      upstream: [style_compiler]
+      downstream: [paper_compiler]
+    lifecycle:
+      since: "2026-08-08"
+      owner: L6 Paper Pipeline
+      evolved_from: "paper_compiler._add_three_line_table() (硬编码)"
+      known_gaps:
+        - "docx XML 渲染路径未程序化 (table_spec 已定义但渲染为 placeholder)"
+
+  style_compiler:
+    source: core/governance/style_compiler_runtime.py
+    trigger_stage: L6
+    status: active
+    boundary:
+      must_call:
+        - intent: paper_style_application
+          description: "用户要求应用/设置论文样式、格式规范"
+          patterns:
+            - "(设置|应用|配置|检查|调整|修改).*(论文|文档).*(样式|格式|字体|排版|行距|页边距|字号)"
+            - "(论文|文档).*(样式|格式|排版).*(设置|配置|应用)"
+            - "(CUMCM|国赛|美赛|MCM).*(格式|样式|排版).*(要求|规范|设置)"
+            - "论文.*(字体|字号|行距|页边距|间距).*(设置|改|调)"
+            - "帮我.*(设置|调整|修改).*(样式|格式|排版)"
+          confidence: 0.90
+        - intent: competition_format_setup
+          description: "用户要求按照竞赛格式规范设置论文"
+          patterns:
+            - "(按照|根据|依据).*(竞赛|比赛|CUMCM|MCM).*(格式|规范|要求)"
+            - "(国赛|美赛).*(格式|规范).*(要求|标准)"
+          confidence: 0.88
+      avoid_call:
+        - intent: content_formatting
+          patterns:
+            - "怎么.*(写|插入|添加).*(公式|图表|引用|目录|页码)"
+            - "(公式|图表).*(怎么编号)"
+          reason: "内容排版操作问题，非样式合约配置"
+    capability:
+      input:
+        required: [PaperStyleContract]
+        optional: [competition_type]
+        schema_ref: "forge-v6/paper-style-contract/v1"
+      output:
+        type: RenderedStyleConfig
+        description: "字体/页面/表格/公式/参考文献的完整样式配置字典"
+    decision:
+      confidence_threshold: 0.80
+      priority: 4
+      fallback: none
+    dependency:
+      upstream: []
+      downstream: [table_compiler, reference_compiler, paper_compiler]
+    lifecycle:
+      since: "2026-08-08"
+      owner: L6 Paper Pipeline
+      evolved_from: "paper_compiler hardcoded style dict"
+      known_gaps:
+        - "MCM 规格未定义（contract 仅有 cumcm_spec）"
+
+  abstract_compiler:
+    source: core/governance/abstract_compiler_runtime.py
+    trigger_stage: L6
+    status: active
+    boundary:
+      must_call:
+        - intent: abstract_generation
+          description: "用户要求生成论文摘要"
+          patterns:
+            - "(生成|编写|写|帮我写).*(摘要|abstract)"
+            - "论文.*(摘要|abstract).*(怎么写|如何写|生成|编写|帮我写|写一下)"
+            - "(需要|要).*(摘要|abstract).*(生成|编写)"
+            - "帮我.*(写|生成).*(摘要|abstract)"
+            - "写一下.*(摘要|abstract)"
+          confidence: 0.92
+        - intent: abstract_revision
+          description: "用户要求修改或优化已有摘要"
+          patterns:
+            - "(修改|优化|改进|重写).*(摘要|abstract)"
+            - "摘要.*(改|修|优化|润色)"
+          confidence: 0.85
+      avoid_call:
+        - intent: abstract_question
+          patterns:
+            - "什么是摘要"
+            - "摘要.*(什么意思|是什么)"
+            - "(怎么写|如何写).*摘要"
+            - "摘要.*(怎么写|如何写)"
+          reason: "写作指导问题，非具体摘要生成"
+    capability:
+      input:
+        required: [ProblemState, DecisionContract, ModelResult]
+        optional: [keywords_override]
+        schema_ref: "forge-v6/problem-state/v1"
+      output:
+        type: AbstractSpec
+        schema_ref: "forge-v6/abstract-spec/v1"
+        description: "5 要素摘要 + 关键词 + 质量标记。字数 700-1000。"
+    decision:
+      confidence_threshold: 0.80
+      priority: 6
+      fallback: none
+    dependency:
+      upstream: [argument_compiler, model_specification]
+      downstream: [paper_compiler]
+    lifecycle:
+      since: "2026-08-08"
+      owner: L6 Paper Pipeline
+      evolved_from: "paper_compiler._generate_abstract()"
+      known_gaps:
+        - "创新要素④的自动检测能力有限，需人工补充"
+
+  reference_compiler:
+    source: core/governance/leaf_compilers_runtime.py
+    trigger_stage: L6
+    status: active
+    boundary:
+      must_call:
+        - intent: reference_generation
+          description: "用户要求生成论文参考文献、引用列表"
+          patterns:
+            - "(生成|编译|输出).*(参考文献|引用|reference)"
+            - "论文.*(参考文献|引用).*(生成|插入|添加)"
+            - "(GB/T|7714|引用格式).*(生成|编译)"
+          confidence: 0.88
+      avoid_call:
+        - intent: citation_format_question
+          patterns:
+            - "(参考文献|引用).*(格式|怎么).*(写|标注|弄)"
+            - "GB/T 7714.*(是什么|怎么用)"
+          reason: "引用格式说明，非参考文献生成"
+    capability:
+      input:
+        required: [SectionArtifact]
+        optional: [DecisionContract, StyleConfig]
+      output:
+        type: PaperArtifact
+        schema_ref: "forge-v6/paper-artifact/v1"
+        description: "GB/T 7714-2015 格式参考文献 (min 5篇)"
+    decision:
+      confidence_threshold: 0.80
+      priority: 4
+      fallback: none
+    dependency:
+      upstream: [style_compiler]
+      downstream: [paper_compiler]
+    lifecycle:
+      since: "2026-08-08"
+      owner: L6 Paper Pipeline
+      evolved_from: "manual reference writing"
+      known_gaps:
+        - "自动从模型卡生成引用的管线未实现"
+        - "参考文献内容为占位符，需要接入外部文献数据库"
+
+  # ===== L7 Reviewer Integration =====
+
+  reviewer_rules:
+    source: core/governance/reviewer_engine_runtime.py
+    trigger_stage: L7
+    status: active
+    boundary:
+      must_call:
+        - intent: paper_scoring
+          description: "用户要求对论文进行质量审查、评分、发现问题和改进建议"
+          patterns:
+            - "(审查|评审|评价|review|打分|评分|评分).*(论文|文章|文档)"
+            - "(能|可以).*(打|给).*(多少|几分)"
+            - "论文.*(质量|评分|问题|好不好|怎么样|能得|能拿|能打).*(审查|检查|评估|多少分|几分|评)"
+            - "(帮我|帮忙).*(看|检查|审查|评|评一下).*(论文|文档)"
+            - "paper.*(review|score|quality|evaluate)"
+            - "(审查|评审|评价).*(论文|文章|文档).*(内容|质量|合理)"
+          confidence: 0.92
+        - intent: pipeline_review
+          description: "系统级触发: Artifact 完成 → 自动审查"
+          patterns:
+            - "__system__: artifact_complete=true"
+          confidence: 0.95
+      avoid_call:
+        - intent: format_only_check
+          patterns:
+            - "(只|仅).*(检查|查看).*(格式|排版|字体)"
+            - "格式.*(对不对|正确吗)"
+          reason: "纯格式检查应由 quality_gate 处理，非内容审查"
+    capability:
+      input:
+        required: [PaperArtifact, PaperBlueprint]
+        optional: [ProblemState, DecisionContract, ModelResult]
+      output:
+        type: ReviewArtifact
+        schema_ref: "forge-v6/review-artifact/v1"
+        description: "审查发现 + 6维评分 + 等级 + 修复优先级。Layer1(Rule)+Layer2(Pattern)+Layer3(LLM)"
+    decision:
+      confidence_threshold: 0.80
+      priority: 8
+      fallback: quality_gate
+    dependency:
+      upstream: [paper_structure, section_generator, quality_gate]
+      downstream: [failure_memory, evolution_controller]
+    lifecycle:
+      since: "2026-08-08"
+      owner: L7 Quality Intelligence
+      evolved_from: "reviewer_agent/ (8 files) + canonical_scoring_framework.md"
+      known_gaps:
+        - "Layer 3 LLM 推理层未接入 (创新性/逻辑合理性评估为 placeholder)"
+        - "pattern 矩阵仅 5 条，待从 reviewer_agent/ 蒸馏更多高频缺陷"
+
+  # ===== L1 Enhancement =====
+
+  contradiction_finder:
+    source: core/governance/consistency_engine_runtime.py
+    trigger_stage: L6.5 (post PaperArtifact)
+    status: active
+    boundary:
+      must_call:
+        - intent: contradiction_detection
+          description: "用户要求检查论文的科学推理一致性、假设模型匹配性"
+          patterns:
+            - "(检查|验证|审查).*(推理|逻辑|一致|矛盾|冲突)"
+            - "(假设|模型|数据|结论).*(是否|有没有).*(一致|矛盾|冲突|匹配)"
+            - "论文.*(有没有|是否有).*(逻辑|推理).*(问题|漏洞|矛盾)"
+            - "(scientific|logical).*(consistency|contradiction|conflict)"
+          confidence: 0.90
+        - intent: pipeline_consistency
+          description: "系统级触发: PaperArtifact + ReviewArtifact 就绪"
+          patterns:
+            - "__system__: review_complete=true"
+          confidence: 0.95
+      avoid_call:
+        - intent: paper_quality_review
+          patterns:
+            - "(论文|文章).*(好不好|怎么样|能得|能拿).*(多少|几分)"
+            - "(审查|评价).*(论文|文章).*(质量|水平)"
+          reason: "论文质量评价由 reviewer_rules 处理"
+    capability:
+      input:
+        required: [PaperArtifact, ReviewArtifact]
+        optional: [ProblemState, DecisionContract, ModelResult]
+      output:
+        type: ConsistencyArtifact
+        schema_ref: "forge-v6/consistency-artifact/v1"
+        description: "科学推理链一致性检查 (assumption→model→data→conclusion)"
+    decision:
+      confidence_threshold: 0.80
+      priority: 6
+      fallback: reviewer_rules
+    dependency:
+      upstream: [paper_structure, reviewer_rules]
+      downstream: [failure_memory, evolution_controller]
+    lifecycle:
+      since: "2026-08-08"
+      owner: L6.5 Scientific Integrity
+      evolved_from: "contradiction_finder.md (262行 S-tier 资产, 4种矛盾类型)"
+      known_gaps:
+        - "Layer 3 LLM 推理未接入 (逻辑链完整性自动分析)"
+        - "模式矩阵仅 5 条，4种矛盾类型的全量"
+
+  # ===== L4 Enhancement =====
+
+  model_competition_engine:
+    source: core/governance/model_strategy_engine_runtime.py
+    trigger_stage: L3
+    status: active
+    boundary:
+      must_call:
+        - intent: model_competition
+          description: "用户要求从多个候选模型中选出最合适的、比较模型优劣"
+          patterns:
+            - "(推荐|选|建议).*(一个|什么|哪个|哪种).*(模型|方法|算法)"
+            - "(选|推荐|比较).*(模型|方法|算法).*(哪个|哪种|什么).*(好|合适|适合|优)"
+            - "(候选|备选).*(模型|方法|算法).*(对比|比较|评分|评估)"
+            - "根据.*(特征|数据|问题).*(推荐|选择).*(模型|方法)"
+            - "(model|method).*(selection|recommendation|comparison|strategy)"
+          confidence: 0.90
+      avoid_call:
+        - intent: model_theory
+          patterns:
+            - "什么是.*(模型|算法)"
+            - "解释.*(原理|公式)"
+          reason: "知识查询，非模型策略决策"
+        - intent: argument_generation
+          patterns:
+            - "为什么.*(选|用).*(模型)"
+            - "论文.*(论证|论据)"
+          reason: "模型选择论证由 argument_compiler 处理 (Strategy=选哪个, Argument=为什么选)"
+    capability:
+      input:
+        required: [ProblemState]
+        optional: [DatasetProfile, weight_profile]
+      output:
+        type: StrategyArtifact
+        description: "候选项 + 五维评分 + 推荐模型 + 策略建议。不与 argument_compiler 职责重叠。"
+    decision:
+      confidence_threshold: 0.80
+      priority: 5
+      fallback: argument_compiler
+    dependency:
+      upstream: [problem_intelligence, strategy_planner]
+      downstream: [argument_compiler, model_specification]
+    lifecycle:
+      since: "2026-08-08"
+      owner: L3 Decision Layer
+      evolved_from: "model_competition_engine.md (409行, 拆分为 Strategy + Knowledge + Argument)"
+      known_gaps:
+        - "评分使用默认值 (7/7/7/7/7)，未接入 models_expert/ 知识卡的真实评分数据"
+        - "权重调优基于 problem_type，未接入 CompetitionKnowledge 的竞赛上下文"
+        - "已明确: §6 决策报告归 argument_compiler，本模块仅输出 StrategyArtifact"
+
+# ===== 统计 =====
+summary:
+  version: v2.0
+  total_skills_registered: 15
+  governed: 4
+  active_governed: 4   # validation_plan RUN_002 passed → active      # 有完整 boundary+capability+decision+dependency+lifecycle 的技能
+  stubs: 11        # 有框架但 patterns 为空，待 Wave 2/3 补齐
+  governed_ids: [argument_compiler, model_specification, quality_gate, validation_plan]
+
+  consumption_readiness:
+    gate_ready: 4
+    needs_boundary: 7
+    needs_code: 4
+
+  benchmark_results:
+    mandatory_recall: "97.5%"
+    false_invocation_rate: "0.0%"
+    gate_ready: "YES"

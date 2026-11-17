@@ -1,0 +1,11 @@
+{
+  "gate": "template_compliance_gate",
+  "checks": [
+    {
+      "name": "fixture-check",
+      "status": "PASS",
+      "detail": "demo fixture"
+    }
+  ],
+  "status": "PASS"
+}

@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "forge-v7/pattern-confidence/v1",
+  "title": "PatternConfidence — 模式可信度合同 v1.0",
+  "description": "定义 PaperPatternEngine 输出的可信度边界。Pattern 不是规则，而是有证据源、有适用条件、有失效风险的决策建议。",
+  "type": "object",
+  "required": ["pattern_id", "confidence", "conditions", "evidence"],
+  "properties": {
+    "pattern_id": {"type": "string"},
+    "source": {"type": "object", "properties": {
+      "paper_count": {"type": "integer"},
+      "paper_ids": {"type": "array", "items": {"type": "string"}},
+      "frequency": {"type": "number", "minimum": 0, "maximum": 1}
+    }},
+    "confidence": {"type": "object", "properties": {
+      "overall": {"type": "number", "minimum": 0, "maximum": 1},
+      "model_selection": {"type": "number", "minimum": 0, "maximum": 1},
+      "chart_recommendation": {"type": "number", "minimum": 0, "maximum": 1},
+      "table_recommendation": {"type": "number", "minimum": 0, "maximum": 1}
+    }},
+    "conditions": {"type": "object", "properties": {
+      "when": {"type": "array", "items": {"type": "string"}, "description": "此模式适用条件"},
+      "avoid": {"type": "array", "items": {"type": "string"}, "description": "此模式失效/不适用条件"},
+      "risk_of_overfit": {"type": "string", "enum": ["low", "medium", "high"]}
+    }},
+    "evidence": {"type": "object", "properties": {
+      "success_rate_high_score": {"type": "number"},
+      "failure_cases_linked": {"type": "array", "items": {"type": "string"}, "description": "关联的 FailureMemory ID"}
+    }}
+  }
+}

@@ -1,0 +1,134 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "forge-v6/model-formalization/v1",
+  "title": "ModelFormalizationContract — L5.5: 模型数学表达层",
+  "description": "将 DecisionContract 的'选了什么模型'转化为'模型如何用数学表达'。每个子问题的每个模型必须输出完整的数学表达。没有公式 = 不能进入论文生成。",
+
+  "type": "object",
+  "required": ["formalization_id", "sub_problem_id", "model_name", "mathematical_expression"],
+  "properties": {
+
+    "formalization_id": {
+      "type": "string",
+      "description": "格式: MF-{decision_contract_id}-{sub_problem_id}"
+    },
+
+    "sub_problem_id": {
+      "type": "string",
+      "description": "对应 DecisionContract.decisions[].sub_problem_id"
+    },
+
+    "model_name": {
+      "type": "string",
+      "description": "对应 DecisionContract.decisions[].primary_model"
+    },
+
+    "mathematical_expression": {
+      "type": "object",
+      "required": ["assumptions", "variables", "core_formulas"],
+      "description": "模型的完整数学表达。竞赛论文要求: 假设→符号→公式→推导→算法 五段式。",
+      "properties": {
+
+        "assumptions": {
+          "type": "array",
+          "minItems": 1,
+          "description": "模型假设列表。每条假设必须包含: 假设内容 + 为什么可以这样假设",
+          "items": {
+            "type": "object",
+            "required": ["statement", "justification"],
+            "properties": {
+              "id": { "type": "string", "examples": ["A1", "A2"] },
+              "statement": { "type": "string", "description": "假设内容, 中文" },
+              "justification": { "type": "string", "description": "为什么可以这样假设, 给出依据" },
+              "violation_condition": { "type": "string", "description": "什么条件下这个假设不成立" }
+            }
+          }
+        },
+
+        "symbols": {
+          "type": "array",
+          "minItems": 1,
+          "description": "符号定义表。竞赛论文要求: 每个符号首次出现时必须定义。",
+          "items": {
+            "type": "object",
+            "required": ["symbol", "meaning", "unit"],
+            "properties": {
+              "symbol": { "type": "string", "description": "LaTeX 表达式, 如 'x_i', '\\lambda'" },
+              "meaning": { "type": "string", "description": "中文含义" },
+              "unit": { "type": "string", "description": "单位, 如 'μg/kg', '无量纲'" },
+              "domain": { "type": "string", "description": "取值范围, 如 'x_i ≥ 0', 'i = 1,2,...,n'" }
+            }
+          }
+        },
+
+        "core_formulas": {
+          "type": "array",
+          "minItems": 1,
+          "description": "核心数学公式列表。每条公式必须包含: LaTeX源码 + 中文解释 + 公式编号",
+          "items": {
+            "type": "object",
+            "required": ["id", "name", "latex", "explanation"],
+            "properties": {
+              "id": { "type": "string", "description": "公式编号, 如 '(1)', '(2)'" },
+              "name": { "type": "string", "description": "公式名称, 如 '目标函数', '约束条件', '归一化公式'" },
+              "latex": { "type": "string", "description": "完整 LaTeX 源码。对 TOPSIS 模型, 必须包含: 归一化公式、加权公式、理想解距离、贴近度 全部4个核心公式" },
+              "explanation": { "type": "string", "description": "公式的中文解释: 每个符号是什么, 为什么用这个公式" }
+            }
+          }
+        },
+
+        "algorithm": {
+          "type": "object",
+          "description": "求解算法描述（优化类/迭代类模型必填）",
+          "properties": {
+            "pseudocode": { "type": "string", "description": "伪代码或算法步骤" },
+            "parameters": { "type": "object", "description": "算法参数, 如 {pop_size: 100, n_gen: 200}" },
+            "convergence_criterion": { "type": "string", "description": "收敛判据" }
+          }
+        },
+
+        "result_interpretation": {
+          "type": "string",
+          "description": "结果的物理/实际含义解释。不只是数字, 而是'这个数字意味着什么'"
+        }
+
+      }
+    },
+
+    "formula_completeness": {
+      "type": "object",
+      "required": ["has_objective_or_main_formula", "has_all_key_derivations"],
+      "description": "公式完整性自检",
+      "properties": {
+        "has_objective_or_main_formula": { "type": "boolean", "description": "是否有目标函数或核心公式" },
+        "has_all_key_derivations": { "type": "boolean", "description": "核心推导步骤是否完整" },
+        "all_symbols_defined": { "type": "boolean", "description": "所有符号是否已在 symbols 或公式解释中定义" },
+        "formulas_numbered": { "type": "boolean", "description": "所有公式是否有编号" },
+        "missing_formulas": { "type": "array", "items": { "type": "string" }, "description": "应出现但缺失的公式列表" }
+      }
+    },
+
+    "compliance_checks": {
+      "type": "object",
+      "description": "与 PaperStyleContract 的合规检查",
+      "properties": {
+        "required_formulas_present": { "type": "boolean", "description": "该题型要求的核心公式是否全部包含" },
+        "required_formulas": { "type": "array", "items": { "type": "string" }, "description": "该题型要求的核心公式列表（来自 PaperStyleContract）" },
+        "missing_required": { "type": "array", "items": { "type": "string" }, "description": "缺失的必填公式" }
+      }
+    }
+
+  },
+
+  "hard_fail_conditions": {
+    "description": "以下条件触发时, 论文生成中止, 必须先补充公式",
+    "conditions": [
+      "core_formulas 为空或不包含任何 LaTeX",
+      "has_objective_or_main_formula = false",
+      "优化类题目缺少目标函数或约束条件的公式",
+      "评价类题目缺少权重计算或综合评价公式",
+      "symbols 为空（符号未定义）",
+      "模型名称出现但论文中该模型的数学表达全文缺失"
+    ]
+  }
+}

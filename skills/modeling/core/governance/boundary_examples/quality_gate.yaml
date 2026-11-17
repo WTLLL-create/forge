@@ -1,0 +1,86 @@
+# quality_gate — SkillBoundary v1.0
+# ==========================================
+# 验证样本 A3: active, L6.5, 论文质量门禁
+
+skill_id: quality_gate
+
+identity:
+  name: "论文质量门禁"
+  domain: ["paper", "governance"]
+  version: "v6.4.1"
+  description: "对生成的论文 .docx 执行 P0/P1/P2 三级质量检查。P0 致命（缺章节/缺摘要）→ 拒绝输出；P1 严重（格式违规/缺图表编号）→ 修复后再输出；P2 标准（引用格式/页码）→ 警告但允许输出。"
+
+boundary:
+  must_call:
+    - intent: paper_quality_check
+      description: "用户要求检查论文质量、是否符合竞赛规范"
+      patterns:
+        - "(检查|审查|审核).*(论文|文档).*(质量|规范|格式|合规)"
+        - "论文.*(符合|满足).*(要求|规范|标准)"
+        - "(质量|格式|合规).*(检查|门禁|把关|审查)"
+        - "(gate|check|review).*(paper|document).*(quality|compliance)"
+        - "检查.*(有没有|是否有).*(缺|少|遗漏)"
+      confidence: 0.94
+
+    - intent: paper_compliance_verification
+      description: "用户要求验证论文是否满足 CUMCM/MCM 格式要求"
+      patterns:
+        - "(CUMCM|国赛|美赛|MCM).*(格式|规范).*(检查|验证|确认)"
+        - "(是否符合|是否满足).*(竞赛|比赛).*(要求|规范)"
+        - "论文.*(格式|排版).*(对不对|正确吗|有问题吗)"
+      confidence: 0.92
+
+    - intent: pre_submission_review
+      description: "提交前最终检查"
+      patterns:
+        - "(提交|上交|交).*(前|之前).*(检查|确认)"
+        - "(最后|最终).*(检查|确认).*(论文|文档)"
+        - "帮我看.*(论文|文档).*(有没有|有没有什么).*(问题|错误)"
+      confidence: 0.85
+
+  avoid_call:
+    - intent: content_review
+      patterns:
+        - "(内容|模型|方法).*(好不好|对不对|合理)"
+        - "(评分|打分).*(论文|内容)"
+        - "论文.*(能得|能拿).*(多少|几).*分"
+      reason: "内容质量评审应由 reviewer_rules 处理，不是格式门禁"
+
+    - intent: writing_advice
+      patterns:
+        - "(怎么写|如何写).*(论文|摘要|结论)"
+        - "(写作|撰写).*(技巧|建议)"
+      reason: "写作指导问题，非质量检查"
+
+capability:
+  input:
+    required:
+      - "论文 .docx 文件"
+      - "PaperStyleContract"
+    optional:
+      - "竞赛类型 (CUMCM/MCM)"
+    schema_ref: "forge-v6/paper-style-contract/v1"
+  output:
+    type: "GateReport"
+    description: "P0 致命错误列表（必须修复）+ P1 严重警告列表 + P2 建议列表 + overall_pass boolean + 违规次数统计"
+
+decision:
+  confidence_threshold: 0.85
+  priority: 9
+  fallback: "reviewer_rules"
+
+dependency:
+  upstream:
+    - "paper_compiler"
+    - "style_compiler"
+  downstream:
+    - "reviewer_rules"
+
+lifecycle:
+  state: active
+  since: "2026-08-04"
+  owner: "Governance"
+  evolved_from: "v5 QualityGateway"
+  known_gaps:
+    - "仅检查格式合规，不检查内容质量（由 reviewer_rules 负责）"
+    - "P0/P1/P2 规则在 paper_quality_gate.md 中定义，未程序化消费 PaperStyleContract.penalty_checklist"

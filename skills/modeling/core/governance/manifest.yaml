@@ -1,0 +1,97 @@
+# Governance Plane Manifest — 治理平面拓扑声明
+
+# 系统版本
+system_version: v6.0
+
+# 治理平面定义
+# 注意：这不是运行时配置，而是架构声明。
+# 它描述了「谁被谁约束」，而不是「怎么约束」。
+
+governance_plane:
+  name: "Research Governance Plane"
+  purpose: >
+    为 Research Agent 提供系统级行为约束。
+    不执行业务逻辑，只定义业务逻辑的行为边界。
+
+  # v6.5 新增: Skill Governance 审计产物
+  skill_governance_audit:
+    completed: "2026-08-08"
+    scope: "skill_runtime_registry.yaml 全部 15 技能"
+    artifacts:
+      - skill_inventory.md           # 全量盘点
+      - readiness_matrix.md          # 四象限矩阵 (A/B/C/D)
+      - missing_contracts.md         # 缺失合同清单
+      - governance_priority.md       # 实施优先级
+
+  # 三层约束 → v6.5 扩展为四层
+  layers:
+    skill_layer:                          # NEW v6.5
+      description: "能力单元的注册、匹配、调用约束"
+      components:
+        - SkillRegistry
+        - InvocationGate
+        - SkillRouter
+      authority_flow: >
+        InvocationGate → SkillRegistry → SkillRouter → Execution
+      depends_on: [decision_layer]
+
+    decision_layer:
+      description: "单个决策级别的约束"
+      components:
+        - EvidenceValidator
+        - QualityGateway
+        - UncertaintyGovernor
+      authority_flow: >
+        EvidenceValidator → UncertaintyGovernor → QualityGateway → Decision
+
+    learning_layer:
+      description: "经验积累和复用的约束"
+      components:
+        - FailureMemory
+        - ErrorLifecycle
+        - SkillFailureMemory        # NEW v6.5
+      authority_flow: >
+        Error → ErrorLifecycle(root_cause) → FailureMemory(match) → GovernanceAdvice
+        SkillBypass → SkillFailureMemory → BoundaryUpdate → SkillRegistry
+
+    evolution_layer:
+      description: "系统变更的约束"
+      components:
+        - AnomalyDetector
+        - SelfDiagnosis
+        - EvolutionGovernor
+      authority_flow: >
+        Metrics → Anomaly → Diagnosis → Proposal → Review → Sandbox → Apply → Validate
+
+  # 唯一权威点（sole authority）
+  sole_authorities:
+    decision_gate: QualityGateway
+    skill_gate: InvocationGate       # NEW v6.5
+    change_gate: EvolutionGovernor
+
+  # ADR 映射
+  adr_bindings:
+    ADR-001: failure_memory      # Memory doesn't directly control
+    ADR-002: decision_gate       # Gateway is sole decision authority
+    ADR-003: failure_pattern     # Patterns are patterns, not rules
+    ADR-004: skill_gate          # NEW: InvocationGate prevents LLM skill bypass
+
+  # 治理边界
+  boundaries:
+    - "Governance Plane does NOT execute mathematical modeling steps"
+    - "Governance Plane does NOT select models"
+    - "Governance Plane does NOT run experiments"
+    - "Governance Plane does NOT directly modify system code"
+    - "All changes require Proposal → Review → Sandbox → Apply"
+    - "InvocationGate MUST intercept before L0; LLM free-form answer forbidden when skill_match.confidence > 0.80"
+
+# 执行平面声明（对端）
+execution_plane:
+  description: "业务逻辑层——数学建模的实际执行"
+  governed_by: governance_plane
+  components:
+    - StateManager
+    - PipelineScheduler
+    - ReasoningEngine
+    - ExperimentEngine
+    - PaperEngine

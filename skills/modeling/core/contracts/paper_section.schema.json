@@ -1,0 +1,74 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "forge-v6/paper-section/v1",
+  "title": "PaperSection — L6→L8 接口",
+  "description": "Paper Reasoning 输出的论文骨架，Generation 层消费。核心：让 docx 生成器不用读论文就能渲染。",
+  "type": "object",
+  "required": ["paper_id", "sections"],
+  "properties": {
+    "paper_id": {
+      "type": "string",
+      "description": "论文标识"
+    },
+    "meta": {
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "competition": { "type": "string", "examples": ["CUMCM", "MCM/ICM"] },
+        "problem": { "type": "string" },
+        "team_id": { "type": "string" }
+      }
+    },
+    "sections": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["chapter", "title", "content_blocks"],
+        "properties": {
+          "chapter": { "type": "integer", "minimum": 1, "maximum": 9 },
+          "title": { "type": "string" },
+          "pattern": {
+            "type": "string",
+            "description": "使用的写作模式，如 contradiction_driven, why_this_model",
+            "examples": ["contradiction_driven", "mechanism_first", "why_this_model"]
+          },
+          "content_blocks": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["type", "content"],
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "enum": ["paragraph", "formula", "figure", "table", "bullet_list", "numbered_list"]
+                },
+                "content": { "type": "string" },
+                "caption": { "type": "string", "description": "图表标题（figure/table 类型必填）" },
+                "formula_latex": { "type": "string", "description": "公式的 LaTeX 源码（formula 类型必填）" },
+                "figure_ref": { "type": "string", "description": "图片文件路径（figure 类型必填）" },
+                "table_data": {
+                  "type": "object",
+                  "description": "表格数据（table 类型必填）",
+                  "properties": {
+                    "headers": { "type": "array", "items": { "type": "string" } },
+                    "rows": { "type": "array", "items": { "type": "array", "items": { "type": "string" } } }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "argument_trace": {
+      "type": "object",
+      "description": "论证链完整性检查结果",
+      "properties": {
+        "contradiction_present": { "type": "boolean" },
+        "model_reasoning_complete": { "type": "boolean" },
+        "contributions_stated": { "type": "boolean" },
+        "anti_pattern_hits": { "type": "array", "items": { "type": "string" } }
+      }
+    }
+  }
+}

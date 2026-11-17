@@ -1,0 +1,104 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "forge-v6/decision-contract/v1",
+  "title": "DecisionContract — L3→L4 接口",
+  "description": "Expert Decision 输出，Models/Data/Compute 消费。每个子问题的模型选择都必须包含 ≥2 个候选的对比论证。",
+  "type": "object",
+  "required": ["contract_id", "decisions"],
+  "properties": {
+    "contract_id": {
+      "type": "string",
+      "description": "唯一标识，格式: DC-{problem_id}-{timestamp}"
+    },
+    "problem_summary": {
+      "type": "object",
+      "description": "上游 ProblemState 的摘要（不重复完整信息，只保留决策需要的）",
+      "properties": {
+        "problem_type": { "type": "string" },
+        "sub_types": { "type": "array", "items": { "type": "string" } },
+        "n_sub_problems": { "type": "integer" }
+      }
+    },
+    "decisions": {
+      "type": "array",
+      "minItems": 1,
+      "description": "每个子问题一个决策条目",
+      "items": {
+        "type": "object",
+        "required": ["sub_problem_id", "primary_model", "reasoning", "alternatives_considered"],
+        "properties": {
+          "sub_problem_id": {
+            "type": "string",
+            "description": "对应 ProblemState.sub_problems[].id"
+          },
+          "primary_model": {
+            "type": "string",
+            "description": "推荐的首选模型名称",
+            "examples": ["NSGA-II", "RandomForest", "Tobit", "ARIMA", "有限差分法"]
+          },
+          "model_family": {
+            "type": "string",
+            "enum": ["optimization", "prediction", "evaluation", "classification", "simulation", "statistics", "physics"],
+            "description": "模型家族，用于路由到正确的 models_expert/ 子目录"
+          },
+          "reasoning": {
+            "type": "array",
+            "items": { "type": "string" },
+            "minItems": 3,
+            "maxItems": 5,
+            "description": "三层论证链：每条一句。为什么这个模型匹配问题特征 → 为什么排除候选 → 什么条件下不适用"
+          },
+          "alternatives_considered": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "object",
+              "required": ["model", "reason_rejected"],
+              "properties": {
+                "model": { "type": "string" },
+                "reason_rejected": { "type": "string" }
+              }
+            }
+          },
+          "mandatory_validations": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "pareto_analysis", "sensitivity_analysis", "ablation_study",
+                "cross_validation", "residual_check", "convergence_check",
+                "stability_check", "baseline_comparison", "uncertainty_quantification",
+                "robustness_check", "parameter_tuning_log"
+              ]
+            },
+            "description": "该模型必须执行的验证项列表"
+          },
+          "risk_flags": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "flag": { "type": "string" },
+                "severity": { "type": "string", "enum": ["high", "medium", "low"] },
+                "mitigation": { "type": "string" }
+              }
+            }
+          },
+          "expected_output": {
+            "type": "string",
+            "description": "该子问题的预期产出形式，如 'Pareto前沿图 + 最优解集CSV'"
+          }
+        }
+      }
+    },
+    "cross_problem_consistency": {
+      "type": "object",
+      "description": "子问题之间的模型一致性检查",
+      "properties": {
+        "incremental_approach": { "type": "boolean", "description": "后一个问题是否在前一个问题基础上增量修改" },
+        "model_reuse": { "type": "array", "items": { "type": "string" }, "description": "可跨子问题复用的模型" },
+        "conflicts": { "type": "array", "items": { "type": "string" }, "description": "子问题之间的模型冲突" }
+      }
+    }
+  }
+}

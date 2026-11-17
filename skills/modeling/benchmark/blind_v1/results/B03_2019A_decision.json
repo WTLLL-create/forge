@@ -1,0 +1,69 @@
+# B03: 2019 A — 高压油管压力控制
+
+> 测试重点: 预测模型是否服务优化决策
+
+## ProblemState
+```json
+{
+  "problem_id": "CUMCM_2019_A",
+  "problem_type": "hybrid",
+  "sub_type": ["physics_modeling", "prediction", "single_objective"],
+  "core_contradiction": "喷油量精确控制 vs 压力波动+电磁阀响应延迟",
+  "domain": "industrial_process",
+  "constraints": ["喷油量误差 < 给定公差", "压力在安全范围内", "电磁阀开关频率有限"],
+  "data_status": {"available": true, "has_time_series": true},
+  "sub_problems": [
+    {"id": "Q1", "task": "建立高压油管压力动态模型", "type": "physics_modeling"},
+    {"id": "Q2", "task": "优化电磁阀控制策略以实现精确喷油", "type": "single_objective"},
+    {"id": "Q3", "task": "在不同工况下验证控制策略", "type": "evaluation"}
+  ]
+}
+```
+
+## DecisionContract
+```json
+{
+  "contract_id": "DC-CUMCM_2019_A-v1",
+  "problem_summary": {"problem_type": "hybrid", "sub_types": ["physics_modeling", "prediction", "single_objective"], "n_sub_problems": 3},
+  "decisions": [
+    {
+      "sub_problem_id": "Q1",
+      "primary_model": "一维非稳态流体动力学 (质量+动量守恒)",
+      "model_family": "physics",
+      "reasoning": [
+        "燃油可压缩 → 需考虑压力波传播",
+        "管长>>管径 → 一维近似",
+        "喷油/进油是边界条件变化"
+      ],
+      "alternatives_considered": [
+        {"model": "经验公式拟合", "reason_rejected": "忽略物理机制, 泛化能力差"}
+      ],
+      "mandatory_validations": ["stability_check", "residual_check"],
+      "risk_flags": [{"flag": "数值振荡", "severity": "high", "mitigation": "隐式格式或减小Δt"}],
+      "expected_output": "压力-时间曲线 + 喷油量计算"
+    },
+    {
+      "sub_problem_id": "Q2",
+      "primary_model": "最优控制 (动态规划或模型预测控制MPC)",
+      "model_family": "optimization",
+      "reasoning": [
+        "控制问题: 时序决策 → 最优控制 > 静态优化",
+        "电磁阀开关是离散决策 → DP 可处理",
+        "排除PID: 约束多+精度要求高 → 最优控制更精确"
+      ],
+      "alternatives_considered": [
+        {"model": "PID控制", "reason_rejected": "纯反馈难以满足喷油量的精确前馈需求"},
+        {"model": "GA", "reason_rejected": "时序控制用GA=暴力搜索, 效率低"}
+      ],
+      "mandatory_validations": ["baseline_comparison", "sensitivity_analysis"],
+      "risk_flags": [],
+      "expected_output": "最优开关时刻表 + 喷油量误差"
+    }
+  ],
+  "cross_problem_consistency": {"incremental_approach": true, "model_reuse": ["Q1压力模型 → Q2控制仿真"], "conflicts": []}
+}
+```
+
+## FailureRecord
+- **边界**: 流体动力学复杂度 → Forge 目前最深的 physics 卡是传热, 流体动力学能力未覆盖
+- **风险**: 可能需要简化假设(如不可压缩)来降低难度 → 需在 Risk Prediction 中标注

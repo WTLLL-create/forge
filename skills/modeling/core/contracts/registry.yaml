@@ -1,0 +1,250 @@
+# Contract Registry v1
+# 定义 Forge v6 中所有模块间接口的版本、生产者和消费者。
+# 新增模块必须先在此注册，建立调用关系后才能执行。
+
+contracts:
+
+  ProblemState:
+    version: "1.0"
+    schema: problem_state.schema.json
+    producer:
+      - problem_intelligence
+    consumers:
+      - strategy_planner
+      - expert_decision
+    routing_key: problem_type
+    routing_rules:
+      optimization: [optimization_decision_rules.md, optimization_pipeline.md]
+      prediction: [prediction_decision_rules.md]
+      evaluation: [evaluation_decision_rules.md]
+      mechanism: [mechanism_problem.md]
+      hybrid: [hybrid_pipeline.md]
+      classification: [prediction_decision_rules.md]
+
+  DecisionContract:
+    version: "1.0"
+    schema: decision_contract.schema.json
+    producer:
+      - expert_decision
+    consumers:
+      - models_expert
+      - data_processing
+      - numerical_computing
+    validation_rules:
+      - "每个子问题至少 2 个候选模型对比"
+      - "每个子问题 mandatory_validations 非空"
+      - "risk_flags 中 high severity 项必须有 mitigation"
+
+  ModelResult:
+    version: "1.0"
+    schema: model_result.schema.json
+    producer:
+      - models_expert
+      - numerical_computing
+      - data_processing
+    consumers:
+      - evidence_layer
+      - paper_reasoning
+    routing_key: execution_status
+    routing_rules:
+      success: [evidence_layer]
+      partial: [evidence_layer, expert_decision]  # 部分成功也验证，但标记issue
+      failed: [expert_decision]  # 失败 → 回退到决策层
+      pending: []
+
+  PaperSection:
+    version: "1.0"
+    schema: paper_section.schema.json
+    producer:
+      - paper_reasoning
+    consumers:
+      - paper_utils.py
+      - evaluation
+    validation_rules:
+      - "argument_trace.contradiction_present 必须为 true"
+      - "argument_trace.model_reasoning_complete 必须为 true"
+
+  # === v6.4.2 Validation Planning Layer ===
+
+  ValidationPlan:
+    version: "1.0"
+    schema: validation_plan.schema.json
+    producer:
+      - ValidationPlanCompiler
+    consumers:
+      - models_expert
+      - evidence_layer
+    description: "模型设计阶段生成的验证任务列表。不是检查结果(ValidationContract的职责)，而是定义L4必须执行什么验证实验。"
+    validation_rules:
+      - "每个 model_family 至少覆盖 required 验证任务"
+      - "blocking_conditions 触发时必须提供 alternative"
+      - "禁止在未执行时预填验证结果"
+    routing_key: model_family
+    routing_rules:
+      evaluation: [evaluation_validation.md]
+      prediction: [prediction_validation.md]
+      optimization: [optimization_validation.md]
+      statistics: [statistics_validation.md]
+    knowledge_cards: "models_expert/validation_patterns/{model_family}_validation.md"
+
+  FailureRecord:
+    version: "1.0"
+    schema: failure_record.schema.json
+    producer:
+      - evaluation
+    consumers:
+      - expert_decision
+    routing_key: stage
+    description: "不自动修复。FailureRecord 供下次 Expert Decision 读取，作为决策参考。"
+
+  # === v6.4.1 Paper Quality Closure Layer ===
+
+  ModelFormalization:
+    version: "1.0"
+    schema: model_formalization.schema.json
+    producer:
+      - L5.5_formalization
+    consumers:
+      - paper_engineering
+      - paper_reasoning
+    description: "将 DecisionContract 的模型选择转化为完整的数学表达。没有公式 = 不能进入论文生成。"
+    hard_fail: "core_formulas 为空 或 has_objective_or_main_formula = false → 中止论文生成"
+
+  PaperStyleContract:
+    version: "1.0"
+    schema: paper_style_contract.schema.json
+    producer:
+      - L6.5_paper_engineering
+    consumers:
+      - paper_engineering
+      - paper_gate
+      - evaluation
+    description: "竞赛论文格式硬约束。字体/页面/表格/公式/参考文献/摘要/题型要求。继承自 v5 paiban_skill。"
+    routing_key: competition
+    routing_rules:
+      CUMCM: [cumcm_spec]
+      MCM: [mcm_spec]
+
+  PaperGateReport:
+    version: "1.0"
+    schema: null  # 由 paper_quality_gate.md 定义
+    producer:
+      - paper_gate
+    consumers:
+      - evaluation
+      - failure_record
+    description: "P0/P1/P2 三级门禁报告。P0触发=拒绝评分。P1触发=分数封顶70。"
+    routing_key: verdict
+    routing_rules:
+      REJECTED_NO_SCORE: [failure_record]    # 记录P0失败, 不评分
+      SCORE_CAPPED: [evaluation, failure_record]  # 评分但封顶70
+      PASSED: [evaluation]                       # 正常评分
+
+  # === v6.5 Skill Governance ===
+
+  SkillBoundary:
+    version: "1.0"
+    schema: skill_boundary.schema.json
+    producer:
+      - skill_registry
+    consumers:
+      - invocation_gate
+      - skill_router
+      - skill_benchmark
+      - skill_failure_memory
+    routing_key: skill_id
+    description: >
+      v6.5 新增。定义每个技能的触发边界、能力契约、依赖关系和生命周期。
+      是 Invocation Gate 的核心输入，解决 LLM 绕过 Skill 直接回答的问题。
+    validation_rules:
+      - "每个 skill_id 必须在 skill_runtime_registry.yaml 中存在"
+      - "must_call 至少 1 条，每条 confidence 在 0.0-1.0"
+      - "confidence_threshold 必须在 0.5-1.0 之间"
+      - "dependency.upstream 中的 skill_id 必须已注册"
+
+  InvocationDecision:
+    version: "1.0"
+    schema: invocation_decision.schema.json
+    producer:
+      - invocation_gate
+    consumers:
+      - skill_failure_memory
+      - decision_trace
+      - evolution_controller
+    routing_key: decision
+    description: >
+      v6.5 新增。Gate 对每次查询的裁决记录。
+      被 Skill FailureMemory 消费以检测技能绕过模式。
+    validation_rules:
+      - "decision 必须是 mandatory_call/suggest/allow_answer 之一"
+      - "mandatory_call 时必须包含 matched_skill"
+      - "timestamp 必须是 ISO 8601 格式"
+
+  AbstractSpec:
+    version: "1.0"
+    schema: abstract_spec.schema.json
+    producer:
+      - abstract_compiler
+    consumers:
+      - paper_compiler
+      - quality_gate
+    routing_key: template_used
+    description: >
+      Wave 2.1 新增。5 要素摘要结构，按题型选择模板。
+    validation_rules:
+      - "abstract_text 700-1000 字"
+      - "elements: problem_statement + method_overview + core_results 必填"
+      - "keywords 3-7 个"
+
+  PaperArtifact:
+    version: "1.0"
+    schema: paper_artifact.schema.json
+    producer:
+      - formula_compiler
+      - table_compiler
+      - chart_compiler
+      - reference_compiler
+    consumers:
+      - paper_compiler
+    routing_key: artifact_type
+    description: >
+      Wave 2.5 新增。L6 论文产物统一接口。
+      四个编译器统一输出此结构的对应子类型。
+    validation_rules:
+      - "artifact_type 必须是 formula/table/chart/reference 之一"
+      - "content 必须包含对应类型的子结构"
+
+  ReviewArtifact:
+    version: "1.0"
+    schema: review_artifact.schema.json
+    producer:
+      - reviewer_rules
+    consumers:
+      - failure_memory
+      - evolution_controller
+    routing_key: severity
+    description: >
+      Wave 3.1 新增。三层审查 (Rule+Pattern+LLM)，6维评分 + 等级 + 修复优先级。
+
+  ConsistencyArtifact:
+    version: "1.0"
+    schema: consistency_artifact.schema.json
+    producer:
+      - contradiction_finder
+    consumers:
+      - failure_memory
+      - evolution_controller
+    routing_key: severity
+    description: >
+      Wave 3.2 新增。科学推理链一致性验证 (assumption→model→data→conclusion)。
+      与 Reviewer 互补: Reviewer=质量评价, Consistency=推理链验证。
+
+  # === v6.0 原合约 ===
+
+  ScoreCard:
+    version: "1.0"
+    schema: null  # 由 canonical_scoring_framework.md 定义，暂不单独 JSON Schema
+    producer:
+      - evaluation
+    consumers:
+      - paper_reasoning

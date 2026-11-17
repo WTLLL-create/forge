@@ -1,0 +1,27 @@
+{
+  "case": "EVO-001",
+  "detections": {
+    "reviewer": [
+      {
+        "type": "weak_model_choice",
+        "severity": "P1",
+        "description": "\u68c0\u6d4b\u5230\u7ebf\u6027\u6a21\u578b\u7528\u4e8e\u975e\u7ebf\u6027\u6570\u636e: \u6570\u636e\u5448\u7ebf\u6027\u8d8b\u52bf\uff0c\u5efa\u8bae\u4f7f\u7528\u7ebf\u6027\u56de\u5f52"
+      }
+    ],
+    "consistency": [
+      {
+        "type": "assumption_model_mismatch",
+        "severity": "P1",
+        "description": "\u7ebf\u6027\u6a21\u578b\u5047\u8bbe\u4e0e\u6570\u636e\u975e\u7ebf\u6027\u7279\u5f81\u77db\u76fe"
+      }
+    ]
+  },
+  "pattern": {
+    "id": "FP-EVO-001",
+    "type": "model_strategy_engine",
+    "frequency": 2,
+    "case_id": "EVO-001",
+    "timestamp": "2026-08-08T08:32:17.318667+00:00"
+  },
+  "timestamp": "2026-08-08T08:32:17.318964+00:00"
+}

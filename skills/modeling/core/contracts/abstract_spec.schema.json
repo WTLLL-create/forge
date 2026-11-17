@@ -1,0 +1,111 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "forge-v6/abstract-spec/v1",
+  "title": "AbstractSpec — 摘要输出合同 v1.0",
+  "description": "定义竞赛论文摘要的 5 要素结构。被 abstract_compiler 产出，被 paper_compiler 和 quality_gate 消费。",
+  "type": "object",
+  "required": ["abstract_text", "elements"],
+  "properties": {
+    "abstract_text": {
+      "type": "string",
+      "description": "完整摘要文本，700-1000 字，禁止公式/引用",
+      "minLength": 500,
+      "maxLength": 1200
+    },
+    "word_count": {
+      "type": "integer",
+      "description": "中文字数（不计标点）",
+      "minimum": 700,
+      "maximum": 1000
+    },
+    "elements": {
+      "type": "object",
+      "required": ["problem_statement", "method_overview", "core_results"],
+      "properties": {
+        "problem_statement": {
+          "type": "object",
+          "description": "要素①: 问题简述 (1-2句)",
+          "properties": {
+            "text": { "type": "string" },
+            "source_contract": { "type": "string", "enum": ["ProblemState"] }
+          }
+        },
+        "method_overview": {
+          "type": "object",
+          "description": "要素②: 方法概述 (2-3句)",
+          "properties": {
+            "text": { "type": "string" },
+            "models_mentioned": {
+              "type": "array",
+              "items": { "type": "string" },
+              "minItems": 1
+            },
+            "source_contract": { "type": "string", "enum": ["DecisionContract"] }
+          }
+        },
+        "core_results": {
+          "type": "object",
+          "description": "要素③: 核心结果 (2-3句, 必须含具体数值)",
+          "properties": {
+            "text": { "type": "string" },
+            "has_quantitative_data": { "type": "boolean" },
+            "key_metrics": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "metric": { "type": "string" },
+                  "value": { "type": "string" }
+                }
+              }
+            },
+            "source_contract": { "type": "string", "enum": ["ModelResult"] }
+          }
+        },
+        "innovation_highlight": {
+          "type": "object",
+          "description": "要素④: 创新亮点 (1-2句, 如果仅套用标准模型可省略)",
+          "properties": {
+            "text": { "type": "string" }
+          }
+        },
+        "conclusion_significance": {
+          "type": "object",
+          "description": "要素⑤: 结论意义 (1句)",
+          "properties": {
+            "text": { "type": "string" }
+          }
+        }
+      }
+    },
+    "keywords": {
+      "type": "array",
+      "items": { "type": "string" },
+      "minItems": 3,
+      "maxItems": 7,
+      "description": "关键词列表"
+    },
+    "problem_type": {
+      "type": "string",
+      "enum": ["optimization", "prediction", "evaluation", "hybrid", "unknown"],
+      "description": "题型，用于选择对应模板"
+    },
+    "template_used": {
+      "type": "string",
+      "description": "使用的摘要模板名称",
+      "enum": ["A_optimization", "B_prediction", "C_evaluation", "generic", "custom"]
+    },
+    "quality_flags": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "flag": { "type": "string" },
+          "severity": { "type": "string", "enum": ["warning", "error"] },
+          "message": { "type": "string" }
+        }
+      },
+      "description": "质量警告（无具体数值、太笼统、字数不足等）"
+    }
+  }
+}

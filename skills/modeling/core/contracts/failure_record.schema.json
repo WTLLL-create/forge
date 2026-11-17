@@ -1,0 +1,63 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "forge-v6/failure-record/v1",
+  "title": "FailureRecord — L7→L3/L4 反馈接口",
+  "description": "Evaluation 层输出的失败记录，供下次运行的 Expert Decision 消费。先让系统能'记'，不要马上让它'自己改'。",
+  "type": "object",
+  "required": ["record_id", "stage", "failure_type", "severity", "suggestion"],
+  "properties": {
+    "record_id": {
+      "type": "string",
+      "description": "唯一标识，格式: FR-{paper_id}-{stage}-{seq}"
+    },
+    "paper_id": {
+      "type": "string"
+    },
+    "stage": {
+      "type": "string",
+      "enum": ["problem_analysis", "model_selection", "model_execution", "validation", "paper_writing", "review"],
+      "description": "失败发生的阶段"
+    },
+    "failure_type": {
+      "type": "string",
+      "enum": [
+        "wrong_problem_type", "missing_constraint", "misidentified_contradiction",
+        "model_selection_error", "model_misuse", "missing_alternative_comparison",
+        "computation_error", "convergence_failure", "parameter_error",
+        "insufficient_validation", "missing_evidence", "overclaiming",
+        "poor_structure", "weak_argument", "format_error"
+      ]
+    },
+    "severity": {
+      "type": "string",
+      "enum": ["critical", "high", "medium", "low"],
+      "description": "critical=直接导致获奖等级下降; high=显著扣分; medium=可改进; low=微调"
+    },
+    "score_impact": {
+      "type": "object",
+      "properties": {
+        "dimension": { "type": "string", "examples": ["D2", "D5"] },
+        "estimated_loss": { "type": "integer", "description": "估计扣分" }
+      }
+    },
+    "suggestion": {
+      "type": "string",
+      "description": "如果重新来，应该怎么做。面向下次 Expert Decision 的输入。",
+      "examples": ["A类物理建模题应优先建立机理模型再考虑数据驱动，而非反之"]
+    },
+    "context": {
+      "type": "object",
+      "description": "失败发生时的上下文，帮助下次识别相似模式",
+      "properties": {
+        "problem_type": { "type": "string" },
+        "model_used": { "type": "string" },
+        "decision_path": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "recurrence_count": {
+      "type": "integer",
+      "default": 0,
+      "description": "同类失败出现的次数。≥2 次 → 考虑升级为预防性规则。"
+    }
+  }
+}

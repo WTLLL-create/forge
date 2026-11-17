@@ -1,0 +1,46 @@
+# System State Snapshot — v4.0.2
+
+system:
+  version: "v4.0.2"
+  status: "stable"
+  codename: "Decision Governance Architecture"
+
+capabilities:
+  execution:
+    status: stable
+    description: "S0-S8 程序化状态机 + Pipeline Scheduler"
+  reasoning:
+    status: stable
+    description: "假设推理 + 方程生成 + 物理直觉库"
+  experimentation:
+    status: stable
+    description: "多模型对比 + 消融实验 + 误差诊断"
+  governance:
+    status: stable
+    description: "Quality Gateway + Uncertainty Governor + Error Lifecycle"
+  memory:
+    status: validated
+    description: "FailurePattern + FailureMemory + Governance Advice"
+  experience_compilation:
+    status: validated
+    description: "失败→抽象→存储→治理→行为改变，完整闭环验证"
+
+validation:
+  benchmark:
+    dgs: 100%
+    total_cases: 11
+    passed: 11
+    false_positives: 0
+  regression:
+    state_manager: pass
+    gateway: pass
+    all_modules: pass
+
+architecture:
+  contracts: "core/contracts/ — canonical, all modules reference this"
+  adr_count: 3
+  governance_failures: 1
+
+next:
+  stage: "v4.1 Experience Governance"
+  target: "多 Pattern 冲突消解 + 经验过期 + 错误经验防护"

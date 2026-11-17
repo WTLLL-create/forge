@@ -1,0 +1,87 @@
+# model_specification — SkillBoundary v1.0
+# ===========================================
+# 验证样本 A2: active, L3.5, 模型规格化
+
+skill_id: model_specification
+
+identity:
+  name: "模型规格化器"
+  domain: ["paper", "reasoning", "prediction", "optimization", "evaluation", "statistics"]
+  version: "v6.4"
+  description: "从 DecisionContract 编译模型的数学形式化：假设、符号表、核心公式。覆盖 evaluation/optimization/prediction/statistics 族，当前模板覆盖率 33%。"
+
+boundary:
+  must_call:
+    - intent: model_formalization
+      description: "用户要求对模型进行数学形式化、建立数学模型框架"
+      patterns:
+        - "(设计|建立|构建|写出|列出).*数学.*(模型|框架|形式|表达|描述)"
+        - "(形式化|规格化|数学表达|数学描述|数学语言).*(模型|问题|方法)"
+        - "(导出|推导|列出|写出).*(假设|符号|公式|方程)"
+        - "(假设条件|符号表|变量定义|模型假设).*(设计|建立|列出|写)"
+        - "(模型|论文).*(符号说明|数学表达|公式化|规格化)"
+        - "(formalize|mathematical.*model).*(specification|framework)"
+        - "微分方程.*(模型|形式化)"
+        - "评价指标.*(数学|模型|框架)"
+        - "数学.*(建模|模型).*(框架|形式|方法|求解)"
+      confidence: 0.90
+
+    - intent: model_documentation
+      description: "用户要求生成论文中的模型符号和公式段"
+      patterns:
+        - "(生成|编写).*(符号表|符号说明|公式段)"
+        - "论文.*(符号|公式).*(怎么写|如何写|需要)"
+        - "(符号说明|模型假设).*(章节|段落)"
+      confidence: 0.85
+
+  avoid_call:
+    - intent: formula_explanation
+      patterns:
+        - "解释.*(公式|符号).*(含义|意思)"
+        - "什么是.*(拉普拉斯|傅里叶|梯度)"
+      reason: "纯数学知识查询，非模型规格化"
+
+    - intent: model_selection_only
+      patterns:
+        - "(选什么|哪个).*(模型|方法).*(好|合适)"
+        - "应该用什么模型"
+      reason: "模型选择决策，应由 expert_decision 处理，不是规格化"
+
+    - intent: code_implementation
+      patterns:
+        - "(代码|实现|编程).*(怎么写|如何)"
+        - "python.*(实现|代码)"
+      reason: "代码实现问题"
+
+capability:
+  input:
+    required:
+      - DecisionContract
+    optional:
+      - ProblemState
+      - ModelResult
+    schema_ref: "forge-v6/decision-contract/v1"
+  output:
+    type: "ModelSpecification"
+    description: "assumptions (假设列表) + variables (符号表) + core_formulas (LaTeX 公式数组)。is_complete 标记模板覆盖状态。"
+
+decision:
+  confidence_threshold: 0.80
+  priority: 6
+  fallback: "none"
+
+dependency:
+  upstream:
+    - "argument_compiler"
+  downstream:
+    - "formula_compiler"
+    - "section_generator"
+
+lifecycle:
+  state: active
+  since: "2026-08-04"
+  owner: "L3.5 Decision→Paper Bridge"
+  evolved_from: "v5 manual formula writing"
+  known_gaps:
+    - "模板覆盖率仅 33% (TOPSIS/CRITIC)，缺少 optimization/prediction/statistics 族模板"
+    - "无模板时 is_complete=false，无 AI fallback 推导机制"

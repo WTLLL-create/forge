@@ -1,0 +1,183 @@
+# Round 2 — Batch B: 边界测试 (P0修复后重测)
+
+---
+
+## B03: 2019A 高压油管 (Round 1: 73)
+
+### Decision → Execution
+```
+Q1: fluid_process → 一维管路模型 → ✅ 新增 fluid_process.md 可覆盖
+Q2: optimal_control → 动态规划/MPC → ⚠️ models_expert 无 optimal_control 卡
+   → 降级为 离散化+参数扫描 (次优但可行)
+```
+
+### ModelResult
+```json
+{
+  "execution_status": "partial",
+  "models_used": ["一维管路(自建有限体积法)", "离散决策树搜索(MPC降级)"],
+  "results_summary": {
+    "Q1_pressure_dynamic": "压力波传播已求解, 喷油周期内压力波动±8%",
+    "Q2_injection_error": "最优开关策略: 喷油量误差 2.3%",
+    "降级说明": "optimal_control → 降级为离散搜索。MPC需 scipy.optimize.minimize 逐时刻优化, 计算量是离散搜索的50×。竞赛时间约束下, 离散搜索+局部优化可接受。"
+  },
+  "validations_performed": ["stability_check(隐式格式)", "sensitivity(开关时刻±2ms)"],
+  "anomalies": [{
+    "type": "model_degradation",
+    "severity": "medium",
+    "description": "optimal_control 无专家卡 → 降级为离散搜索。精度损失约5%, 竞赛可接受。"
+  }],
+  "honesty": {
+    "overclaiming": false,
+    "confidence_calibrated": true,
+    "model_degradation_reported": true
+  }
+}
+```
+
+### Score: 71/100
+| 维度 | 得�� | 变化(vs Round1) |
+|------|:---:|:---:|
+| 模型实现 | 15/20 | -3: MPC降级, 但诚实标注 |
+| 参数处理 | 14/20 | -2: 摩擦系数λ取经验值 |
+| 约束处理 | 14/20 | -6: 电磁阀开关频率约束实际处理 |
+| 验证方法 | 14/25 | -11: 缺压力波传播验证 |
+| 结果解释 | 14/15 | 明确标注降级路径 |
+
+---
+
+## B05: 2017A CT 标定 (Round 1: 68→?)
+
+### Decision → Execution
+```
+Q1: statistics → 非线性最小二乘+Tikhonov → ✅ parameter_identification 覆盖
+  但: CT/Radon 非标准模型, 需从几何原理自建
+```
+
+### ModelResult
+```json
+{
+  "execution_status": "success",
+  "models_used": ["Radon投影几何模型(自建)", "least_squares+Tikhonov(scipy)"],
+  "results_summary": {
+    "Q1_geometry_params": "旋转中心偏移 Δx=1.2mm, Δy=0.8mm, 探测器间距 d=0.276mm",
+    "Q1_regularization": "Tikhonov λ=0.01 (L-curve选参), 参数稳定性好",
+    "uncertainty": "95%CI: Δx∈[0.9,1.5]mm, Δy∈[0.5,1.1]mm"
+  },
+  "validations_performed": ["uncertainty_quantification(CI)", "regularization_sensitivity(L-curve)", "multi_start_consistency(5起点→同一解)"],
+  "anomalies": [],
+  "honesty": {
+    "overclaiming": false,
+    "inverse_problem_acknowledged": true,
+    "non_uniqueness_discussed": "Tikhonov 选唯一解, 置信区间反映不确定性"
+  }
+}
+```
+
+### Score: 75/100 (↑7)
+| 维度 | 得分 | 变化 |
+|------|:---:|:---:|
+| 模型实现 | 15/20 | CT几何需自建, 但有明确推导 |
+| 参数处理 | 17/20 | Tikhonov λ有理据(L-curve) +3 |
+| 约束处理 | 15/20 | 探测器间距物理约束 |
+| 验证方法 | 16/25 | CI+L-curve+多起点, 缺与无正则化解对比(-9) |
+| 结果解释 | 12/15 | 逆问题不唯一性已讨论 |
+
+---
+
+## B09: 2024A 板凳龙 (Round 1: 63→?)
+
+### Decision → Execution
+```
+Q1: geometry_mechanism → Frenet标架递推 → ✅ 新增 geometry_mechanism.md
+  但: 题目含复杂几何约束, 模型需从零构建
+```
+
+### ModelResult
+```json
+{
+  "execution_status": "partial",
+  "models_used": ["Frenet标架递推(自建 numpy)"],
+  "results_summary": {
+    "Q1_trajectory": "螺线路径已生成, 队员间距约束满足",
+    "issues": "转弯半径R_min=2m时, 队员间距1.5m约束在弯道处紧绷(距边界0.05m)。需确认题目是否允许接触。",
+    "incomplete": "Q2(碰撞避免优化)和Q3(协调性评估)仅完成框架, 未完整求解"
+  },
+  "validations_performed": ["constraint_check(间距/转弯半径)", "discretization_convergence(步长0.01→0.001, 轨迹变化<1%)"],
+  "anomalies": [{
+    "type": "incomplete_execution",
+    "severity": "high",
+    "description": "3个子问题仅Q1完整。Q2/Q3需迭代优化框架, 当前仅骨架。"
+  }],
+  "honesty": {
+    "overclaiming": false,
+    "incomplete_reported": true,
+    "remaining_work_estimated": "Q2+Q3 需额外 2-3小时"
+  }
+}
+```
+
+### Score: 60/100 (↑-3, 但质量上升)
+| 维度 | 得分 | 评价 |
+|------|:---:|------|
+| 模型实现 | 10/20 | Q1完整, Q2/Q3仅框架 |
+| 参数处理 | 12/20 | Frenet参数合理, 但螺线参数未优化 |
+| 约束处理 | 14/20 | 间距/转弯约束检查, 边界case已识别 |
+| 验证方法 | 12/25 | 收敛性有, 缺完整求解后验证 |
+| 结果解释 | 12/15 | **诚实标注了未完成, 这是正确的行为** |
+
+---
+
+## B10: 2015A 太阳影子 (Round 1: 49→?)
+
+### Decision → Execution
+```
+Q1: geometry_mechanism → 天球几何+非线性LS → ⚠️ geometry card 覆盖几何部分
+  但: 反问题不唯一 → 这不是模型实现问题, 是题目本质
+```
+
+### ModelResult
+```json
+{
+  "execution_status": "success",
+  "models_used": ["天球几何模型(自建)", "least_squares+多起点(scipy)"],
+  "results_summary": {
+    "Q1_estimation": "纬度≈30°N, 日期≈6月21日(夏至)附近",
+    "solution_space": "参数空间存在多个可行域: (30°N, 6/21), (10°N, 8/15), (-15°S, 12/21) — R²均>0.95",
+    "inherent_ambiguity": "仅凭影子长度无法唯一确定(纬度,日期)组合。这是题目的本质特征, 非模型缺陷。"
+  },
+  "validations_performed": ["multi_solution_report(3个可行域)", "sensitivity_analysis(各可行域的R²曲面)", "uncertainty_quantification(可行域范围)"],
+  "anomalies": [],
+  "honesty": {
+    "overclaiming": false,
+    "inherent_ambiguity_acknowledged": true,
+    "multi_solution_reported": true,
+    "note": "这不是失败 — 识别出'无法唯一确定'本身就是正确的数学建模。题目原意可能要求附加约束(如已知大致纬度)来缩小范围。"
+  }
+}
+```
+
+### Score: 68/100 (↑19)
+| 维度 | 得分 | 变化 |
+|------|:---:|:---:|
+| 模型实现 | 16/20 | 几何模型正确 +4 |
+| 参数处理 | 15/20 | 反问题适定性分析到位 +5 |
+| 约束处理 | 12/20 | 附加约束需求已识别 |
+| 验证方法 | 15/25 | multi_solution+敏感性+CI, 缺外部验证数据(-10) |
+| 结果解释 | 10/15 | **Honesty加分**: 明确报告了"唯一解不存在" |
+| Model Honesty | 10/10 | **满分**: 反问题不唯一性已完整讨论 |
+
+---
+
+## Batch B 小结
+
+| 题目 | Round 1 Decision | Round 2 Execution | Δ | 关键发现 |
+|------|:---:|:---:|:---:|------|
+| B03 高压油管 | 73 | 71 | -2 | optimal_control 降级→诚实标注 |
+| B05 CT | 68 | 75 | **+7** | Tikhonov 正则化+L-curve 提升参数可靠性 |
+| B09 板凳龙 | 63 | 60 | -3 | 复杂度高, 诚实报告未完成(正确行为) |
+| B10 太阳影子 | 49 | 68 | **+19** | 从天球几何无覆盖→识别反问题本质+多可行域 |
+
+**核心信号**: 
+- B10 从结构性失败(49)→诚实建模(68)。P0修复不是让 Forge 变全知, 而是让它知道"什么不会"。
+- B09 的 60 分是诚实的 60 分 — 比 Round 1 的 63 分(基于猜测)更有价值。

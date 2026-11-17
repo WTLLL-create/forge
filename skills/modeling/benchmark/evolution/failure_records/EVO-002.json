@@ -1,0 +1,27 @@
+{
+  "case": "EVO-002",
+  "detections": {
+    "reviewer": [
+      {
+        "type": "weak_model_choice",
+        "severity": "P1",
+        "description": "\u5047\u8bbe\u72ec\u7acb\u540c\u5206\u5e03\u4e0eARIMA\u65f6\u5e8f\u6a21\u578b\u77db\u76fe"
+      }
+    ],
+    "consistency": [
+      {
+        "type": "assumption_model_mismatch",
+        "severity": "P1",
+        "description": "\u72ec\u7acb\u6027\u5047\u8bbe\u4e0e\u81ea\u56de\u5f52\u6a21\u578b\u7ed3\u6784\u51b2\u7a81"
+      }
+    ]
+  },
+  "pattern": {
+    "id": "FP-EVO-002",
+    "type": "model_specification",
+    "frequency": 2,
+    "case_id": "EVO-002",
+    "timestamp": "2026-08-08T08:32:17.319765+00:00"
+  },
+  "timestamp": "2026-08-08T08:32:17.320046+00:00"
+}

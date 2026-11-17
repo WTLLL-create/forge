@@ -1,0 +1,251 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "forge-v6/paper-style-contract/v1",
+  "title": "PaperStyleContract — 竞赛论文格式约束",
+  "description": "定义 CUMCM/MCM 竞赛论文的格式硬约束。不是'建议'，是'必须满足'。继承自 v5 paiban_skill 的 29 个规则文件，蒸馏为机器可执行的 JSON Schema。【2026-09-08 表格条款废止】content_requirements.required_tables/table_count_range 的固定表格名单与数量配额、document_spec.font.table_caption 的表题黑体加粗要求，已被 standards/academic_table_standard.md 取代，不得再作为成稿表格的依据或扣分理由；表格以锁定的 table_spec.json 为准。其余非表格条款维持原用途。",
+
+  "type": "object",
+  "required": ["competition", "document_spec", "content_requirements"],
+
+  "competition": {
+    "type": "string",
+    "enum": ["CUMCM", "MCM"],
+    "description": "竞赛类型决定全部格式参数"
+  },
+
+  "document_spec": {
+    "$ref": "#/$defs/cumcm_spec",
+    "description": "根据 competition 字段自动选择对应规格"
+  },
+
+  "content_requirements": {
+    "type": "object",
+    "required": ["chapters", "required_figures", "required_tables", "required_formulas", "abstract_rules", "model_section_rules", "penalty_checklist"],
+    "properties": {
+
+      "chapters": {
+        "type": "array",
+        "minItems": 8,
+        "description": "CUMCM 强制11段结构",
+        "items": {
+          "type": "object",
+          "required": ["number", "title", "mandatory"],
+          "properties": {
+            "number": { "type": "integer", "minimum": 1, "maximum": 11 },
+            "title": { "type": "string" },
+            "mandatory": { "type": "boolean" },
+            "min_content_items": { "type": "integer", "description": "最少需要几个 content_block" },
+            "required_elements": { "type": "array", "items": { "type": "string" }, "description": "该章必须包含的元素" }
+          }
+        }
+      },
+
+      "required_figures": {
+        "type": "array",
+        "description": "当前题型必须包含的图表列表（来自 layout_profile.json 的 problem_types 映射）",
+        "items": {
+          "type": "object",
+          "properties": {
+            "type": { "type": "string" },
+            "mandatory": { "type": "boolean", "default": true },
+            "generated": { "type": "boolean", "default": false, "description": "是否已经生成？L6.5 PaperEngineering 检查时自动标记" }
+          }
+        }
+      },
+
+      "required_tables": {
+        "type": "array",
+        "description": "当前题型必须包含的表格列表",
+        "items": {
+          "type": "object",
+          "properties": {
+            "type": { "type": "string" },
+            "mandatory": { "type": "boolean", "default": true }
+          }
+        }
+      },
+
+      "required_formulas": {
+        "type": "array",
+        "description": "当前题型必须包含的公式类型列表",
+        "items": {
+          "type": "object",
+          "properties": {
+            "type": { "type": "string" },
+            "present": { "type": "boolean", "default": false },
+            "count": { "type": "integer", "minimum": 0 }
+          }
+        }
+      },
+
+      "formula_count_range": {
+        "type": "array",
+        "minItems": 2,
+        "maxItems": 2,
+        "items": { "type": "integer" },
+        "description": "[min, max] 公式总数范围"
+      },
+
+      "figure_count_range": {
+        "type": "array",
+        "minItems": 2,
+        "maxItems": 2,
+        "items": { "type": "integer" },
+        "description": "[min, max] 图表总数范围"
+      },
+
+      "table_count_range": {
+        "type": "array",
+        "minItems": 2,
+        "maxItems": 2,
+        "items": { "type": "integer" },
+        "description": "[min, max] 表格总数范围"
+      },
+
+      "abstract_rules": {
+        "type": "object",
+        "required": ["min_chars", "max_chars", "no_formulas", "keyword_count_min", "keyword_count_max"],
+        "properties": {
+          "min_chars": { "type": "integer", "description": "最少字符数" },
+          "max_chars": { "type": "integer", "description": "最多字符数" },
+          "no_formulas": { "type": "boolean", "description": "摘要禁止出现公式" },
+          "no_citations": { "type": "boolean", "description": "摘要禁止出现引用" },
+          "keyword_count_min": { "type": "integer" },
+          "keyword_count_max": { "type": "integer" }
+        }
+      },
+
+      "model_section_rules": {
+        "type": "object",
+        "required": ["must_contain"],
+        "description": "模型建立章节的强制内容要求",
+        "properties": {
+          "must_contain": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "模型章节必须包含的六个要素: 假设/符号/数学表达/求解方法/参数解释/验证"
+          },
+          "assumptions_must_have_justification": { "type": "boolean" },
+          "symbols_must_be_defined_before_use": { "type": "boolean" },
+          "formulas_must_be_numbered": { "type": "boolean" },
+          "results_must_include_interpretation": { "type": "boolean" }
+        }
+      },
+
+      "penalty_checklist": {
+        "type": "object",
+        "required": ["P0_fatal", "P1_critical", "P2_standard"],
+        "description": "评审扣分清单。P0 触发 = 论文不合格。来自 layout_profile.json checklist_priority。",
+        "properties": {
+          "P0_fatal": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "致命级 — 缺少任一项 = 直接判定不合格"
+          },
+          "P1_critical": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "严重级 — 竞赛论文的重大缺陷"
+          },
+          "P2_standard": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "标准级 — 影响论文规范性和印象分"
+          }
+        }
+      }
+
+    }
+  },
+
+  "$defs": {
+    "cumcm_spec": {
+      "type": "object",
+      "description": "CUMCM 国赛格式规格",
+      "required": ["font", "page", "table_style", "equation", "reference"],
+      "properties": {
+        "font": {
+          "type": "object",
+          "properties": {
+            "body": { "type": "object", "properties": { "name": {"const": "宋体"}, "size_pt": {"const": 12} } },
+            "heading": { "type": "object", "properties": { "name": {"const": "黑体"}, "size_h1_pt": {"const": 16} } },
+            "title": { "type": "object", "properties": { "name": {"const": "黑体"}, "size_pt": {"const": 18}, "bold": {"const": true} } },
+            "table_caption": { "type": "object", "properties": { "name": {"const": "黑体"}, "size_pt": {"const": 10.5}, "bold": {"const": true} } }
+          }
+        },
+        "page": {
+          "type": "object",
+          "properties": {
+            "size": { "const": "A4" },
+            "margin_mm": { "const": 25 },
+            "line_spacing": { "const": 1.38 },
+            "first_line_indent_cm": { "const": 0.74 }
+          }
+        },
+        "table_style": {
+          "type": "object",
+          "properties": {
+            "style": { "const": "booktabs" },
+            "no_vertical_lines": { "const": true },
+            "no_double_lines": { "const": true },
+            "no_color_background": { "const": true },
+            "caption_position": { "const": "above" }
+          },
+          "description": "三线表规范: 顶线粗/中线细/底线粗, 禁止竖线, 禁止双线, 禁止彩色背景"
+        },
+        "equation": {
+          "type": "object",
+          "properties": {
+            "numbering_style": { "const": "arabic_parentheses" },
+            "must_be_numbered": { "const": true },
+            "must_have_intro_text": { "const": true, "description": "每个公式前必须有引导文字" },
+            "must_explain_variables": { "const": true, "description": "公式后必须解释每个变量的含义" }
+          }
+        },
+        "reference": {
+          "type": "object",
+          "properties": {
+            "style": { "const": "GB/T 7714-2015" },
+            "min_count": { "const": 5 },
+            "citation_style": { "const": "superscript_bracket" }
+          }
+        }
+      }
+    }
+  },
+
+  "problem_type_templates": {
+    "optimization": {
+      "required_figures": ["模型流程图", "算法收敛曲线", "参数敏感性分析图", "优化前后对比图"],
+      "required_tables": ["符号说明表", "参数设置表", "最优解结果表", "算法对比表"],
+      "required_formulas": ["目标函数", "约束条件", "变量定义"],
+      "formula_count_range": [20, 40],
+      "figure_count_range": [8, 20],
+      "table_count_range": [4, 12]
+    },
+    "prediction": {
+      "required_figures": ["数据趋势图", "预测vs实际对比图", "误差/残差分布图"],
+      "required_tables": ["数据描述统计表", "模型性能对比表", "特征重要性表"],
+      "required_formulas": ["模型表达式", "评价指标公式", "误差公式"],
+      "formula_count_range": [10, 20],
+      "figure_count_range": [6, 15],
+      "table_count_range": [3, 10]
+    },
+    "evaluation": {
+      "required_figures": ["指标体系层次图", "权重分布图", "评价结果排名图", "敏感性分析图"],
+      "required_tables": ["指标体系表", "权重计算结果表", "评价排名表"],
+      "required_formulas": ["权重计算公式", "综合评价公式", "一致性检验公式"],
+      "formula_count_range": [10, 15],
+      "figure_count_range": [5, 12],
+      "table_count_range": [3, 8]
+    },
+    "mechanism": {
+      "required_figures": ["物理模型示意图", "模型验证对比图", "参数标定结果图"],
+      "required_tables": ["物理参数表", "模型校准结果表", "验证数据集结果表"],
+      "required_formulas": ["物效方程", "边界条件", "参数估计公式"],
+      "formula_count_range": [25, 50],
+      "figure_count_range": [8, 18],
+      "table_count_range": [3, 10]
+    }
+  }
+}

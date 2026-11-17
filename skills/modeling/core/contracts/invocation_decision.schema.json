@@ -1,0 +1,155 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "forge-v6/invocation-decision/v1",
+  "title": "InvocationDecision — Gate 输出合同 v1.0",
+  "description": "Invocation Gate 对每个用户查询的裁决结果。记录匹配的技能、置信度、决策理由和完整的决策链路。被 Skill FailureMemory 和 Decision Trace 消费。",
+  "type": "object",
+  "required": ["decision_id", "decision", "query", "timestamp"],
+  "properties": {
+
+    "decision_id": {
+      "type": "string",
+      "description": "唯一标识，格式: ID-{timestamp}",
+      "examples": ["ID-20260808T145500"]
+    },
+
+    "decision": {
+      "type": "string",
+      "enum": ["mandatory_call", "suggest", "allow_answer"],
+      "description": "Gate 最终裁决。mandatory_call=必须调用技能禁止直接回答, suggest=建议调用但不强制, allow_answer=允许自由回答"
+    },
+
+    "query": {
+      "type": "object",
+      "required": ["text"],
+      "properties": {
+        "text": {
+          "type": "string",
+          "description": "用户原始查询文本"
+        },
+        "domain_hint": {
+          "type": "string",
+          "description": "Problem Intelligence 提供的领域提示（如果有）"
+        }
+      }
+    },
+
+    "matched_skill": {
+      "type": "object",
+      "description": "匹配到的技能信息。decision=allow_answer 时此字段可能为空。",
+      "properties": {
+        "skill_id": {
+          "type": "string",
+          "description": "匹配到的技能标识符"
+        },
+        "confidence": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0,
+          "description": "综合置信度 = semantic_score*0.6 + pattern_score*0.3 + lifecycle_score*0.1"
+        },
+        "semantic_score": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0,
+          "description": "Intent 语义过滤器评分。基于 query 意图与 skill must_call.intent 的语义相似度。"
+        },
+        "pattern_score": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0,
+          "description": "Boundary 模式匹配器评分。基于 must_call.patterns 的正则/关键词匹配率。"
+        },
+        "lifecycle_score": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0,
+          "description": "生命周期评分。active=1.0, partial=0.5, sandbox=0.3, not_connected=0.1, deprecated=0.0"
+        },
+        "matched_intent": {
+          "type": "string",
+          "description": "触发此次匹配的 must_call.intent 标签"
+        },
+        "matched_patterns": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "实际匹配到的 patterns 列表"
+        }
+      }
+    },
+
+    "all_candidates": {
+      "type": "array",
+      "description": "所有候选技能的评分列表（供审计和 FailureMemory 分析）。按 confidence 降序排列。",
+      "items": {
+        "type": "object",
+        "properties": {
+          "skill_id": { "type": "string" },
+          "confidence": { "type": "number" },
+          "decision": { "type": "string", "enum": ["mandatory_call", "suggest", "allow_answer"] }
+        }
+      }
+    },
+
+    "reason": {
+      "type": "string",
+      "description": "人类可读的决策理由。用于 Decision Trace 和调试。",
+      "maxLength": 500
+    },
+
+    "gating_details": {
+      "type": "object",
+      "description": "门禁检查的详细结果",
+      "properties": {
+        "dependency_check": {
+          "type": "object",
+          "properties": {
+            "passed": { "type": "boolean" },
+            "blocking_upstream": {
+              "type": "array",
+              "items": { "type": "string" },
+              "description": "状态非 active 的上游依赖技能列表"
+            },
+            "reason": { "type": "string" }
+          }
+        },
+        "lifecycle_check": {
+          "type": "object",
+          "properties": {
+            "state": {
+              "type": "string",
+              "enum": ["active", "partial", "not_connected", "deprecated", "sandbox"]
+            },
+            "callable": { "type": "boolean" },
+            "reason": { "type": "string" }
+          }
+        },
+        "confidence_check": {
+          "type": "object",
+          "properties": {
+            "threshold": { "type": "number" },
+            "actual": { "type": "number" },
+            "above_threshold": { "type": "boolean" }
+          }
+        }
+      }
+    },
+
+    "fallback_used": {
+      "type": "boolean",
+      "description": "是否因匹配技能的 dependency/lifecycle 检查失败而使用了 fallback 技能"
+    },
+
+    "timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "description": "决策时间戳，ISO 8601"
+    },
+
+    "gate_version": {
+      "type": "string",
+      "description": "Invocation Gate 版本号",
+      "const": "v1.0"
+    }
+  }
+}

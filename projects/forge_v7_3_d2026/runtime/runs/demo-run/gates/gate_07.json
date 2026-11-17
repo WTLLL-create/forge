@@ -1,0 +1,10 @@
+{
+  "status": "PASS",
+  "gate": "gate_7",
+  "checks": [
+    {
+      "status": "PASS",
+      "name": "fixture-check"
+    }
+  ]
+}

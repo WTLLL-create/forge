@@ -1,0 +1,160 @@
+{
+  "timestamp": "2026-08-08T15:30:43.038380",
+  "gate_version": "v1.0",
+  "skills_tested": [
+    "argument_compiler",
+    "model_specification",
+    "quality_gate",
+    "validation_plan"
+  ],
+  "total_cases": 120,
+  "total_correct": 103,
+  "overall_accuracy": 0.8583333333333333,
+  "mandatory_recall": 0.975,
+  "false_invocation_rate": 0.0,
+  "ambiguous_accuracy": 0.6,
+  "gate_ready": true,
+  "failures": {
+    "mandatory": [
+      {
+        "query": "生成论文中的数学模型章节，包含假设和公式",
+        "expected": "mandatory_call",
+        "actual": "suggest",
+        "skill_id": "model_specification",
+        "matched_skill": "model_specification",
+        "confidence": 0.5104
+      }
+    ],
+    "forbidden": [],
+    "ambiguous": [
+      {
+        "query": "这个题目应该用什么模型？",
+        "expected": "suggest",
+        "actual": "allow_answer",
+        "skill_id": "argument_compiler",
+        "matched_skill": null,
+        "confidence": null
+      },
+      {
+        "query": "给我推荐一个预测方法",
+        "expected": "suggest",
+        "actual": "allow_answer",
+        "skill_id": "argument_compiler",
+        "matched_skill": null,
+        "confidence": null
+      },
+      {
+        "query": "怎么解决这个优化问题？",
+        "expected": "suggest",
+        "actual": "allow_answer",
+        "skill_id": "model_specification",
+        "matched_skill": null,
+        "confidence": null
+      },
+      {
+        "query": "帮我看看这个模型有没有问题",
+        "expected": "suggest",
+        "actual": "allow_answer",
+        "skill_id": "validation_plan",
+        "matched_skill": null,
+        "confidence": null
+      },
+      {
+        "query": "在这几个方法里怎么选？",
+        "expected": "suggest",
+        "actual": "allow_answer",
+        "skill_id": "argument_compiler",
+        "matched_skill": null,
+        "confidence": null
+      },
+      {
+        "query": "这个数据适合用什么算法处理？",
+        "expected": "suggest",
+        "actual": "allow_answer",
+        "skill_id": "argument_compiler",
+        "matched_skill": null,
+        "confidence": null
+      },
+      {
+        "query": "论文还需要什么才能提交？",
+        "expected": "suggest",
+        "actual": "allow_answer",
+        "skill_id": "quality_gate",
+        "matched_skill": null,
+        "confidence": null
+      },
+      {
+        "query": "能不能帮我生成一个模型方案？",
+        "expected": "suggest",
+        "actual": "allow_answer",
+        "skill_id": "model_specification",
+        "matched_skill": null,
+        "confidence": null
+      },
+      {
+        "query": "我的评价体系建好了，怎么验证？",
+        "expected": "mandatory_call",
+        "actual": "allow_answer",
+        "skill_id": "validation_plan",
+        "matched_skill": "validation_plan",
+        "confidence": 0.4604
+      },
+      {
+        "query": "论文格式感觉不太对，怎么改？",
+        "expected": "suggest",
+        "actual": "allow_answer",
+        "skill_id": "quality_gate",
+        "matched_skill": null,
+        "confidence": null
+      },
+      {
+        "query": "你用数学的话说一遍我这个思路",
+        "expected": "suggest",
+        "actual": "allow_answer",
+        "skill_id": "model_specification",
+        "matched_skill": null,
+        "confidence": null
+      },
+      {
+        "query": "假设条件这么列行不行？",
+        "expected": "allow_answer",
+        "actual": "suggest",
+        "skill_id": "model_specification",
+        "matched_skill": "model_specification",
+        "confidence": 0.5104
+      },
+      {
+        "query": "摘要改了，帮我重新看看格式",
+        "expected": "suggest",
+        "actual": "allow_answer",
+        "skill_id": "quality_gate",
+        "matched_skill": null,
+        "confidence": null
+      },
+      {
+        "query": "我这个问题是NP-hard的，有什么启发式方法？",
+        "expected": "suggest",
+        "actual": "allow_answer",
+        "skill_id": "argument_compiler",
+        "matched_skill": null,
+        "confidence": null
+      },
+      {
+        "query": "数据驱动的模型和机理模型哪个更适合？",
+        "expected": "suggest",
+        "actual": "mandatory_call",
+        "skill_id": "argument_compiler",
+        "matched_skill": "argument_compiler",
+        "confidence": 0.952
+      },
+      {
+        "query": "帮我检查一下这个题目属于什么类型",
+        "expected": "suggest",
+        "actual": "allow_answer",
+        "skill_id": "argument_compiler",
+        "matched_skill": null,
+        "confidence": null
+      }
+    ]
+  }
+}

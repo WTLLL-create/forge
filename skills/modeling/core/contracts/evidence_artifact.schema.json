@@ -1,0 +1,48 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "forge-v7/evidence-artifact/v1",
+  "title": "EvidenceArtifact — 证据推理产物 v1.0",
+  "description": "连接 Pattern Planning 和 Artifact Compilation 的中间层。定义论文中的每个 Claim 如何被 Evidence 支撑、对应哪个评分维度。",
+  "type": "object",
+  "required": ["evidence_id", "claims"],
+  "properties": {
+    "evidence_id": {"type": "string"},
+    "problem_type": {"type": "string"},
+    "claims": {"type": "array", "items": {"$ref": "#/$defs/claim"}},
+    "metrics": {"$ref": "#/$defs/evidence_metrics"}
+  },
+  "$defs": {
+    "claim": {
+      "type": "object",
+      "required": ["claim_id", "statement", "scoring_dimension", "required_evidence"],
+      "properties": {
+        "claim_id": {"type": "string"},
+        "statement": {"type": "string", "description": "论文主张的论点"},
+        "scoring_dimension": {"type": "string", "enum": ["D1_problem_understanding", "D2_model_reasoning", "D3_solution_reliability", "D4_validation_completeness", "D5_innovation", "D6_paper_quality"]},
+        "required_evidence": {"type": "array", "items": {"$ref": "#/$defs/evidence_item"}},
+        "confidence": {"type": "number", "minimum": 0, "maximum": 1}
+      }
+    },
+    "evidence_item": {
+      "type": "object",
+      "required": ["type", "artifact_ref", "sufficiency_check"],
+      "properties": {
+        "type": {"type": "string", "enum": ["table", "chart", "formula", "argument_text"]},
+        "artifact_ref": {"type": "string", "description": "对应的 Artifact ID"},
+        "sufficiency_check": {"type": "object", "properties": {
+          "required_columns": {"type": "array", "items": {"type": "string"}, "description": "表格必须包含的列"},
+          "required_metrics": {"type": "array", "items": {"type": "string"}, "description": "必须报告的指标"},
+          "required_statistical_tests": {"type": "array", "items": {"type": "string"}}
+        }}
+      }
+    },
+    "evidence_metrics": {
+      "type": "object",
+      "properties": {
+        "esr": {"type": "number", "description": "Evidence Sufficiency Rate"},
+        "ccr": {"type": "number", "description": "Claim Coverage Rate"},
+        "pcr": {"type": "number", "description": "Pattern Compliance Rate (from v7.0.2)"}
+      }
+    }
+  }
+}

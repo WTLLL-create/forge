@@ -1,0 +1,33 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "EquationArtifact",
+  "description": "公式Artifact — 从LaTeX字符串升级为Word公式对象",
+  "type": "object",
+  "required": ["id", "latex", "number"],
+  "properties": {
+    "id": {"type": "string", "pattern": "^EQ_\\d+_\\d+$", "description": "如 EQ_5_1"},
+    "latex": {"type": "string", "description": "LaTeX源码"},
+    "number": {"type": "string", "pattern": "^\\(\\d+-\\d+\\)$", "description": "如 (5-1)"},
+    "variables": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "symbol": {"type": "string"},
+          "meaning": {"type": "string"},
+          "unit": {"type": "string"}
+        }
+      },
+      "description": "变量解释列表"
+    },
+    "render": {
+      "type": "object",
+      "properties": {
+        "engine": {"type": "string", "enum": ["omml", "text", "image"], "default": "omml"},
+        "font": {"type": "string", "default": "Cambria Math"},
+        "alignment": {"type": "string", "enum": ["center"], "default": "center"}
+      }
+    },
+    "chapter": {"type": "integer", "description": "所属章节号"}
+  }
+}

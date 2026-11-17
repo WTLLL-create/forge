@@ -1,0 +1,38 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "forge-v7/knowledge-contract/v1",
+  "title": "ModelKnowledgeContract — 统一模型知识合同 v1.0",
+  "description": "所有模型知识资产的统一结构。确保每个模型能被 KnowledgeRouter 检索、ModelStrategyEngine 消费、PatternEngine 匹配。",
+  "type": "object",
+  "required": ["model_identity", "problem_types", "mathematical_core", "competition_pattern"],
+  "properties": {
+    "model_identity": {
+      "type": "object", "required": ["name", "category"],
+      "properties": {
+        "name": {"type": "string"}, "category": {"type": "string", "enum": ["evaluation", "optimization", "prediction", "classification", "domain_knowledge"]},
+        "aliases": {"type": "array", "items": {"type": "string"}}
+      }
+    },
+    "problem_types": {"type": "array", "items": {"type": "string"}, "description": "此模型适用的题型"},
+    "input": {"type": "object", "properties": {"data_requirement": {"type": "string"}}},
+    "output": {"type": "string"},
+    "mathematical_core": {"type": "object", "required": ["formula", "steps"],
+      "properties": {"formula": {"type": "string"}, "steps": {"type": "array", "items": {"type": "string"}}}
+    },
+    "assumptions": {"type": "array", "items": {"type": "string"}},
+    "advantages": {"type": "array", "items": {"type": "string"}},
+    "limitations": {"type": "array", "items": {"type": "string"}},
+    "failure_cases": {"type": "array", "items": {"type": "string"}, "description": "已知失败模式 — 连接 FailureMemory"},
+    "competition_pattern": {"type": "object", "required": ["trigger_conditions", "typical_pairings", "avoid_combinations"],
+      "properties": {
+        "trigger_conditions": {"type": "array", "items": {"type": "string"}},
+        "typical_pairings": {"type": "array", "items": {"type": "string"}, "description": "常与其他模型组合使用"},
+        "avoid_combinations": {"type": "array", "items": {"type": "string"}}
+      }
+    },
+    "evidence_links": {"type": "array", "items": {"type": "string"}, "description": "关联的 EvidenceGraph claims"},
+    "related_models": {"type": "array", "items": {"type": "string"}},
+    "confidence": {"type": "number", "minimum": 0, "maximum": 1, "description": "知识可靠度"},
+    "source_papers": {"type": "array", "items": {"type": "string"}, "description": "来源论文 ID"}
+  }
+}

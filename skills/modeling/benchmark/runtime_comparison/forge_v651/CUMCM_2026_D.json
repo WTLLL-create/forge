@@ -1,0 +1,132 @@
+{
+  "problem_id": "CUMCM_2026_D",
+  "system": "v6.5.1 (DAG Runtime)",
+  "trace": [
+    {
+      "node": "problem_intelligence",
+      "status": "success",
+      "type": "decision",
+      "time_s": 0.01
+    },
+    {
+      "node": "model_strategy_engine",
+      "status": "success",
+      "type": "decision",
+      "time_s": 0.01
+    },
+    {
+      "node": "paper_structure",
+      "status": "success",
+      "type": "planning",
+      "time_s": 0.01
+    },
+    {
+      "node": "argument_compiler",
+      "status": "success",
+      "type": "explanation",
+      "time_s": 0.01
+    },
+    {
+      "node": "style_compiler",
+      "status": "success",
+      "type": "specification",
+      "time_s": 0.01
+    },
+    {
+      "node": "model_specification",
+      "status": "success",
+      "type": "specification",
+      "time_s": 0.01
+    },
+    {
+      "node": "validation_plan",
+      "status": "success",
+      "type": "governance",
+      "time_s": 0.01
+    },
+    {
+      "node": "section_generator",
+      "status": "success",
+      "type": "orchestration",
+      "time_s": 0.01
+    },
+    {
+      "node": "abstract_compiler",
+      "status": "success",
+      "type": "content",
+      "time_s": 0.01
+    },
+    {
+      "node": "formula_compiler",
+      "status": "success",
+      "type": "execution",
+      "time_s": 0.01
+    },
+    {
+      "node": "chart_compiler",
+      "status": "success",
+      "type": "execution",
+      "time_s": 0.01
+    },
+    {
+      "node": "table_compiler",
+      "status": "success",
+      "type": "execution",
+      "time_s": 0.01
+    },
+    {
+      "node": "reference_compiler",
+      "status": "success",
+      "type": "execution",
+      "time_s": 0.01
+    },
+    {
+      "node": "quality_gate",
+      "status": "success",
+      "type": "governance",
+      "time_s": 0.01
+    },
+    {
+      "node": "reviewer_rules",
+      "status": "success",
+      "type": "review",
+      "time_s": 0.01
+    },
+    {
+      "node": "contradiction_finder",
+      "status": "success",
+      "type": "review",
+      "time_s": 0.01
+    }
+  ],
+  "artifacts": [
+    "ProblemState",
+    "StrategyArtifact",
+    "DecisionContract",
+    "PaperBlueprint",
+    "SectionArtifacts",
+    "ArtifactGraph",
+    "ModelSpecification",
+    "ArgumentArtifact",
+    "ReviewArtifact",
+    "ConsistencyArtifact",
+    "GateReport",
+    "StyleConfig",
+    "ValidationPlan"
+  ],
+  "review": {
+    "total_score": 82,
+    "grade": "good",
+    "findings": [
+      {
+        "type": "weak_model_choice",
+        "severity": "P1",
+        "description": "模型选择理由可进一步加强"
+      }
+    ]
+  },
+  "consistency": {
+    "consistency_score": 88,
+    "findings": []
+  }
+}

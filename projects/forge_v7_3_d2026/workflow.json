@@ -1,0 +1,15 @@
+{
+  "schema": "forge-project-workflow/v2",
+  "workflow_id": "forge-demo",
+  "runtime_root": "runtime/runs",
+  "timeout_seconds": 30,
+  "stages": [
+    {
+      "id": "build",
+      "script": "scripts/build.py",
+      "produces": [
+        "artifacts/paper.md"
+      ]
+    }
+  ]
+}

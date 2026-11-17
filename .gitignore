@@ -1,0 +1,33 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.pytest_cache/
+.venv/
+venv/
+*.egg-info/
+
+# 本地配置与密钥
+.env
+.env.*
+*.key
+*.pem
+
+# 日志与运行产物
+*.log
+runtime/
+projects/*/runtime/
+projects/*/data/
+projects/*/results/
+projects/*/paper_artifacts.json
+
+# 控制台测试的最小 fixture 需要保留
+!projects/forge_v7_3_d2026/runtime/
+!projects/forge_v7_3_d2026/runtime/runs/
+!projects/forge_v7_3_d2026/runtime/runs/demo-run/
+
+# IDE / 系统
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db

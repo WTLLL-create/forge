@@ -1,0 +1,48 @@
+{
+  "competition": {
+    "name": "CUMCM",
+    "version": "2024",
+    "template_file": "CUMCM_template.docx"
+  },
+  "page": {
+    "size": "A4",
+    "margin": {
+      "top": "2.5cm",
+      "bottom": "2.5cm",
+      "left": "3cm",
+      "right": "3cm"
+    },
+    "header": "论文题目",
+    "footer": "页码 (居中)"
+  },
+  "font": {
+    "body_cn": "宋体",
+    "body_en": "Times New Roman",
+    "body_size": "小四 (12pt)",
+    "line_spacing": 1.5
+  },
+  "heading": {
+    "level1": {"font": "黑体", "size": "三号 (16pt)"},
+    "level2": {"font": "黑体", "size": "四号 (14pt)"},
+    "level3": {"font": "黑体", "size": "小四 (12pt)"}
+  },
+  "table": {
+    "style": "three_line",
+    "top_border": "1.5pt",
+    "header_border": "0.75pt",
+    "bottom_border": "1.5pt",
+    "vertical_border": "none",
+    "font_size": "五号 (10.5pt)",
+    "caption_position": "above"
+  },
+  "equation": {
+    "align": "center",
+    "numbering": "right",
+    "font": "Cambria Math",
+    "render_engine": "omml"
+  },
+  "reference": {
+    "format": "GB/T 7714",
+    "min_count": 5
+  }
+}

@@ -1,0 +1,66 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "forge-v6/validation-contract/v1",
+  "title": "ValidationContract — L4→L5→L6 的证据接口",
+  "description": "ModelResult 输出后，论文生成前，必须通过的证据检查。解决 D5 验证完整性短板。",
+  "type": "object",
+  "required": ["contract_id", "model_family", "evidence_items"],
+  "properties": {
+    "contract_id": {
+      "type": "string",
+      "description": "对应 ModelResult.result_id"
+    },
+    "model_family": {
+      "type": "string",
+      "enum": ["optimization", "prediction", "evaluation", "classification", "physics", "statistics", "simulation"],
+      "description": "决定必选验证项的类型"
+    },
+    "evidence_items": {
+      "type": "array",
+      "description": "每个验证项的完成状态",
+      "items": {
+        "type": "object",
+        "required": ["check_id", "name", "status"],
+        "properties": {
+          "check_id": { "type": "string" },
+          "name": { "type": "string" },
+          "status": {
+            "type": "string",
+            "enum": ["passed", "partial", "missing", "not_applicable"],
+            "description": "passed=充分验证, partial=有但不完整, missing=完全缺失, not_applicable=该类型不需要"
+          },
+          "evidence": {
+            "type": "string",
+            "description": "通过时的证据（数值/图表引用）"
+          },
+          "score_impact": {
+            "type": "integer",
+            "description": "缺失时对 D5 的预估扣分"
+          }
+        }
+      }
+    },
+    "confidence_level": {
+      "type": "string",
+      "enum": ["high", "medium", "low", "critical"],
+      "description": "综合所有 evidence_items 的置信度。high=全部passed, medium=部分passed+partial, low=多个missing, critical=核心验证缺失"
+    },
+    "missing_impact": {
+      "type": "object",
+      "properties": {
+        "d5_estimated_score": { "type": "integer", "minimum": 0, "maximum": 10 },
+        "can_still_publish": { "type": "boolean", "description": "缺失的验证是否阻止论文生成" },
+        "blocking_missing": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "如果存在，论文生成前必须标注'未验证'"
+        }
+      }
+    },
+    "paper_warnings": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "直接插入论文模型评价章节的警告文本"
+    }
+  }
+}

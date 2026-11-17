@@ -1,0 +1,109 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "forge-v6/validation-plan/v1",
+  "title": "ValidationPlan — L3.5: 验证规划合约",
+  "description": "在模型设计阶段生成的验证任务列表。不是检查结果(VLidationContract的职责)，而是定义'下一步必须完成什么实验'。ValidationPlan 是执行计划，ValidationContract 是结果检查。",
+
+  "type": "object",
+  "required": ["plan_id", "sub_problem_id", "model_name", "model_family", "validation_objective", "validation_tasks"],
+
+  "properties": {
+    "plan_id": {
+      "type": "string",
+      "description": "格式: VP-{decision_contract_id}-{sub_problem_id}"
+    },
+    "sub_problem_id": { "type": "string" },
+    "model_name": { "type": "string" },
+    "model_family": {
+      "type": "string",
+      "enum": ["optimization", "prediction", "evaluation", "classification", "physics", "statistics", "simulation"],
+      "description": "决定必做验证类型"
+    },
+
+    "validation_objective": {
+      "type": "array",
+      "items": { "type": "string" },
+      "minItems": 1,
+      "description": "验证目标: 每个条目回答'这个验证要证明什么'。如 prove_accuracy, prove_generalization, prove_robustness",
+      "examples": [["prove_accuracy", "prove_generalization", "prove_robustness"]]
+    },
+
+    "validation_tasks": {
+      "type": "array",
+      "minItems": 1,
+      "description": "具体验证任务列表。每条是可执行的实验指令。按优先级排列: required → recommended → optional",
+      "items": {
+        "type": "object",
+        "required": ["task_id", "type", "priority", "method", "metric"],
+        "properties": {
+          "task_id": { "type": "string", "description": "格式: VT-{sub_problem_id}-{seq}" },
+          "type": {
+            "type": "string",
+            "enum": [
+              "train_test_split", "cross_validation", "residual_analysis",
+              "sensitivity_analysis", "parameter_sweep", "leave_one_out",
+              "baseline_comparison", "method_comparison", "ablation_study",
+              "convergence_check", "robustness_check", "uncertainty_quantification",
+              "dimensional_consistency", "boundary_condition_check",
+              "goodness_of_fit"
+            ]
+          },
+          "priority": {
+            "type": "string",
+            "enum": ["required", "recommended", "optional"],
+            "description": "required=不做则论文不合格; recommended=时间允许就做; optional=加分项"
+          },
+          "method": {
+            "type": "string",
+            "description": "具体实验方法，L4可直接执行的操作。如 80_20, k_fold_5, one_factor, leave_one_out"
+          },
+          "parameters": {
+            "type": "object",
+            "description": "实验参数，如 {split_ratio: 0.8, k: 5, variable: fc_threshold, values: [2,3,5]}"
+          },
+          "metric": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "评价指标，如 [RMSE, R2, Kendalls_tau]"
+          },
+          "blocking_conditions": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "condition": { "type": "string", "description": "如 sample_size < 50" },
+                "alternative": { "type": "string", "description": "如 use leave_one_out instead" }
+              }
+            },
+            "description": "阻止该验证执行的条件及替代方案"
+          },
+          "paper_statement": {
+            "type": "string",
+            "description": "论文中该验证结果的陈述模板"
+          }
+        }
+      }
+    },
+
+    "metadata": {
+      "type": "object",
+      "properties": {
+        "total_required": { "type": "integer", "minimum": 0 },
+        "total_recommended": { "type": "integer", "minimum": 0 },
+        "total_optional": { "type": "integer", "minimum": 0 },
+        "estimated_runtime": { "type": "string" },
+        "generated_from": { "type": "string", "description": "来自哪个知识卡或决策规则" }
+      }
+    }
+  },
+
+  "safety_rules": {
+    "description": "禁止编造验证结果的硬约束",
+    "rules": [
+      "每个 validation_task 必须可被 L4 实际执行 — 如果执行条件不满足，标记为 blocked 并提供替代方案",
+      "不允许因'模型需要验证'而自动编造一个看起来合理的公式或数值",
+      "如果 blocking_conditions 全部触发且无 alternative → 标记为 not_executable，论文诚实声明'因条件不足未能执行'",
+      "verification_result 字段仅在 L4 实际执行后填写，Compiler 不预填结果"
+    ]
+  }
+}

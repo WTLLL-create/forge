@@ -1,0 +1,8 @@
+# 日志与本地临时文件
+server.out.log
+server.err.log
+*.log
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/

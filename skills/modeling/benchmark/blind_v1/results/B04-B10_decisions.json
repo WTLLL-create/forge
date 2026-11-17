@@ -1,0 +1,114 @@
+# Blind Benchmark v1 — Round 1 Results
+# B04-B10 DecisionContracts (concise)
+
+# ============================================================
+# B04: 2021 A — FAST 射电望远镜馈源支撑 (多目标优化)
+# 测试: Pareto前沿 + NSGA-II 候选比较
+# ============================================================
+## ProblemState
+{"problem_id":"CUMCM_2021_A","problem_type":"hybrid","sub_type":["multi_objective","mechanism","single_objective"],"core_contradiction":"馈源舱定位精度 vs 索力均匀性 vs 调整范围","domain":"engineering","constraints":["索力在安全范围内","馈源舱姿态偏差<给定阈值","调整机构行程有限"]}
+
+## DecisionContract
+decisions: [
+  Q1: 悬链线/抛物线模型(索力-位移关系) → model_family:physics, 推理:索是大变形柔性体, 排除刚性连杆模型
+  Q2: NSGA-II多目标优化(精度+索力+范围) → model_family:optimization, 推理:3目标+冲突 → Pareto, 排除加权法(权重敏感), 排除单目标(丢失权衡信息)
+  Q3: 分层分析(多方案对比) → model_family:statistics
+]
+risk_flags:["索力模型精度→假设索为理想柔索, 实际有弯曲刚度","NSGA-II 收敛→population size 需调参"]
+model_family:"physics"路由到 mechanism_model.md(可用)
+FailureRecord: 索力模型在 models_expert/ 中无专项卡 → 需补充结构力学卡
+
+# ============================================================
+# B05: 2017 A — CT 系统参数标定 (逆问题+参数辨识)
+# 测试: 反问题建模 + 数值稳定性
+# ============================================================
+## ProblemState
+{"problem_id":"CUMCM_2017_A","problem_type":"hybrid","sub_type":["parameter_identification","physics_modeling","single_objective"],"core_contradiction":"从投影数据反推几何参数(逆问题不唯一) vs 标定精度要求","domain":"engineering","constraints":["探测器间距固定","旋转中心未知","投影数据含噪声"]}
+
+## DecisionContract
+decisions: [
+  Q1: Radon反投影+最小二乘 → model_family:statistics, 推理:几何参数反推=逆问题, 排除直接求解(不适定)
+  Q2: 优化→最小化投影残差 → model_family:optimization, 推理:参数辨识的标准范式
+]
+risk_flags:[{"flag":"逆问题不适定性","severity":"high","mitigation":"Tikhonov正则化+多角度验证"}]
+model_family:"statistics"路由到 parameter_identification.md ✅
+FailureRecord: CT/Radon变换为非标准模型 → 需要从scipy+数值计算直接构建, models_expert无覆盖
+
+# ============================================================
+# B06: 2022 A — 波浪能最大输出功率 (数据驱动优化)
+# 测试: ML+优化混合
+# ============================================================
+## ProblemState
+{"problem_id":"CUMCM_2022_A","problem_type":"hybrid","sub_type":["physics_modeling","prediction","single_objective"],"core_contradiction":"波浪能捕获效率最大化 vs 浮子运动与PTO系统的耦合约束","domain":"engineering"}
+
+## DecisionContract
+decisions: [
+  Q1: 浮子运动方程(二阶ODE) → model_family:physics
+  Q2: 功率优化 → 先用物理模型生成数据→数据驱动代理模型(RF/GPR)→优化
+  → model_family:prediction+optimization, 推理:物理模型每次评估成本高, 代理模型加速优化
+]
+risk_flags:[{"flag":"代理模型外推误差","severity":"medium","mitigation":"仅在数据点密集区域优化"}]
+FailureRecord: 代理优化(surrogate optimization)在 models_expert 中无专项卡, 仅在旧 skills/ 有 surrogate_optimization.md
+
+# ============================================================
+# B07: 2016 A — 系泊系统设计 (力学机理)
+# 测试: 纯物理推导 + 设计空间探索
+# ============================================================
+## ProblemState
+{"problem_id":"CUMCM_2016_A","problem_type":"hybrid","sub_type":["mechanism","single_objective","evaluation"],"core_contradiction":"浮标稳定性(吃水深度+倾斜角) vs 系泊系统重量/成本","domain":"engineering"}
+
+## DecisionContract
+decisions: [
+  Q1: 悬链线方程(系泊链力学模型) → model_family:physics
+  Q2: 静力平衡(浮力=重力+系泊力) → model_family:physics
+  Q3: 设计参数优化(链长+重块质量+锚点) → model_family:optimization
+]
+risk_flags:[{"flag":"悬链线假设(无弯曲刚度)可能不成立","severity":"medium"}]
+FailureRecord: 题目难度在于"识别出悬链线模型"——如果Forge的 ProblemIntelligence 未识别力学特征, 会推荐错误模型
+
+# ============================================================
+# B08: 2023 A — 定日镜场优化 (约束优化)
+# 测试: 大规模离散优化 + 可行性
+# ============================================================
+## ProblemState
+{"problem_id":"CUMCM_2023_A","problem_type":"hybrid","sub_type":["single_objective","constrained"],"core_contradiction":"光学效率最大化 vs 镜场面积+土地约束+安全间距","domain":"engineering","constraints":["镜间距确保无碰撞","镜场面积有限","吸热塔高度固定"]}
+
+## DecisionContract
+decisions: [
+  Q1: 镜场光学模型(余弦效率+阴影遮挡) → model_family:physics
+  Q2: 离散优化(镜场布局为离散变量) → model_family:optimization,
+      推理:镜面位置离散→启发式(SA/GA) or MILP(变量>1000→SA), 排除梯度方法(离散不可导)
+]
+risk_flags:[{"flag":"离散变量数量巨大→穷举不可行","severity":"high","mitigation":"启发式+局部搜索"}]
+FailureRecord: 离散优化在 models_expert 中仅有 MILP(变量<100)策略, 大规模离散优化(>1000变量)无覆盖
+
+# ============================================================
+# B09: 2024 A — 板凳龙 (综合型)
+# 测试: 几何+优化+约束 多方法融合
+# ============================================================
+## ProblemState
+{"problem_id":"CUMCM_2024_A","problem_type":"hybrid","sub_type":["mechanism","single_objective","evaluation","constrained"],"core_contradiction":"龙身运动轨迹的流畅性 vs 转弯半径限制 vs 队员协调性","domain":"kinematics"}
+
+## DecisionContract
+decisions: [
+  Q1: 运动学模型(刚体运动+几何约束) → model_family:physics
+  Q2: 轨迹规划(路径优化) → model_family:optimization, 推理:几何路径+碰撞避免 → 非线性规划
+  Q3: 协调性评估 → model_family:evaluation
+]
+risk_flags:[{"flag":"曲率/转弯半径计算→几何精度敏感","severity":"medium"}]
+FailureRecord: 题目非工业过程, 是运动学+几何→ProblemIntelligence可能误判为纯优化题, 遗漏几何约束
+
+# ============================================================
+# B10: 2015 A — 太阳影子定位 (压力测试)
+# 测试: 几何建模→最可能失败
+# ============================================================
+## ProblemState
+{"problem_id":"CUMCM_2015_A","problem_type":"hybrid","sub_type":["parameter_identification","mechanism"],"core_contradiction":"仅凭影子长度和时间反推地理位置+日期(信息高度不完整)","domain":"astronomy","constraints":["仅知影子长度序列","不知其他任何信息"]}
+
+## DecisionContract
+decisions: [
+  Q1: 天球几何模型(太阳高度角→影子长度) → model_family:physics
+  Q2: 反演经纬度+日期 → model_family:statistics, 推理:多参数非线性反演, 排除直接求解(信息不足以唯一确定)
+]
+risk_flags:[{"flag":"反演不唯一→多组(经纬度,日期)可能产生相同影子","severity":"critical","mitigation":"需外部约束(如已知大致纬度范围)+敏感性分析报告不确定性"}]
+FailureRecord: 天球几何在 models_expert 中完全无覆盖→Forge 将严重依赖 AI 的通用物理知识, 失败概率极高

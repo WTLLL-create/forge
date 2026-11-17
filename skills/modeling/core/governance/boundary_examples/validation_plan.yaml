@@ -1,0 +1,86 @@
+# validation_plan — SkillBoundary v1.0
+# ==========================================
+# 验证样本 A4: partial (HELD), L3.5, 验证规划
+
+skill_id: validation_plan
+
+identity:
+  name: "验证规划编译器"
+  domain: ["governance", "evaluation", "prediction", "optimization", "statistics"]
+  version: "v6.4.2"
+  description: "从 DecisionContract 的 mandatory_validations 字段编译结构化验证计划。覆盖 4 个模型家族，按 required/recommended 分类。代码完整、测试通过，等待 RUN_002 跨题型验证。"
+
+boundary:
+  must_call:
+    - intent: validation_planning
+      description: "用户要求规划模型的验证方案、设计验证实验"
+      patterns:
+        - "(设计|规划|制定).*(验证|检验).*(方案|计划|实验|策略)"
+        - "(模型|结果).*(如何|怎么).*(验证|检验|证明)"
+        - "(需要|应该).*(做|进行).*(什么|哪些).*(验证|检验)"
+        - "模型.*(验证|检验).*(方法|方案|步骤)"
+        - "(validation|verification).*(plan|strategy|design)"
+        - "检验.*(模型|显著性|指标)"
+        - "验证.*(策略|指标|步骤)"
+      confidence: 0.90
+
+    - intent: evidence_requirement
+      description: "用户询问模型需要提供哪些证据支持"
+      patterns:
+        - "(需要|应该).*(什么|哪些).*(证据|指标|检验).*(支持|证明)"
+        - "(证据|检验).*(清单|列表|要求)"
+        - "论文.*(需要).*(什么|哪些).*(验证|检验)"
+      confidence: 0.85
+
+    - intent: mandatory_validation_check
+      description: "DecisionContract 中存在非空 mandatory_validations 时，自动触发（系统级）"
+      patterns:
+        - "__system__: DecisionContract.data.decisions[].mandatory_validations 非空"
+      confidence: 0.95
+
+  avoid_call:
+    - intent: validation_result_interpretation
+      patterns:
+        - "(验证|检验).*(结果|结论).*(说明|意思|含义)"
+        - "这个.*(验证|检验).*(为什么|怎么).*(通过|不通过)"
+      reason: "验证结果解读，不是验证方案规划"
+
+    - intent: simple_model_question
+      patterns:
+        - "(用|使).*(什么|哪个).*(模型|方法)"
+        - "这个.*(数据|问题).*(怎么|如何).*(分析|处理)"
+      reason: "模型选择/数据分析问题，非验证规划"
+
+capability:
+  input:
+    required:
+      - DecisionContract
+    optional:
+      - ProblemState
+      - model_family
+    schema_ref: "forge-v6/decision-contract/v1"
+  output:
+    type: "ValidationPlan"
+    description: "required_tasks（必做的 N 个验证任务）+ recommended_tasks（建议的 M 个验证任务）。每个任务含 description + data_requirement + blocking_condition。"
+
+decision:
+  confidence_threshold: 0.75
+  priority: 5
+  fallback: "none"
+
+dependency:
+  upstream:
+    - "expert_decision"
+  downstream:
+    - "evidence_layer"
+    - "reviewer_rules"
+
+lifecycle:
+  state: partial
+  since: "2026-08-04"
+  owner: "L3.5 Decision→Paper Bridge"
+  evolved_from: "v6.1 evidence_checklist"
+  known_gaps:
+    - "RUN_001 (hybrid data_analysis+evaluation 题型) 验证通过，等待 RUN_002 跨题型验证"
+    - "validation knowledge cards (.md) 由 FAMILY_TASKS 硬编码引用，非动态消费"
+    - "Pipeline 集成未完成：compile() 可独立运行但未被 L3.5 管线自动触发"

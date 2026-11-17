@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Forge Console</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <span class="logo">F</span>
+      <div class="brand-text">
+        <h1>Forge Console</h1>
+        <p>多阶段工作流 · 运行与门禁控制台</p>
+      </div>
+    </div>
+    <div class="actions">
+      <label class="select-wrap">
+        <span class="sr-only">项目</span>
+        <select id="project-select"></select>
+      </label>
+      <button id="run-button" class="primary">运行一次</button>
+      <span id="job-badge" class="job-badge hidden"></span>
+    </div>
+  </header>
+
+  <main class="layout">
+    <aside class="sidebar">
+      <div class="panel-title">
+        <span>运行记录</span>
+        <span id="run-count" class="muted"></span>
+      </div>
+      <ul id="run-list" class="run-list"></ul>
+      <p id="run-empty" class="muted empty-hint hidden">还没有运行记录。</p>
+    </aside>
+
+    <section class="content">
+      <div id="empty-state" class="empty">
+        <h2>选择左侧的一次运行</h2>
+        <p>查看阶段、门禁与产物，或点击「运行一次」启动新任务。</p>
+      </div>
+
+      <div id="run-view" class="hidden">
+        <div class="run-head">
+          <div class="run-head-text">
+            <h2 id="run-title">—</h2>
+            <p id="run-meta" class="muted"></p>
+          </div>
+          <span id="run-status" class="status-badge">—</span>
+        </div>
+
+        <div class="stat-grid" id="stat-grid"></div>
+
+        <section class="block">
+          <div class="block-head">
+            <h3>阶段 <span id="stage-count" class="muted"></span></h3>
+            <span class="muted small">点击阶段可查看 stdout / stderr</span>
+          </div>
+          <div id="stage-list" class="stage-list"></div>
+        </section>
+
+        <section class="block">
+          <div class="block-head">
+            <h3>门禁</h3>
+            <span class="muted small">点击门禁卡片查看逐项检查</span>
+          </div>
+          <div id="gate-grid" class="gate-grid"></div>
+          <div id="gate-detail" class="gate-detail hidden"></div>
+        </section>
+
+        <section class="block">
+          <div class="block-head">
+            <h3>审稿工作台</h3>
+            <span class="muted small">Reviewer 发现问题 → Writer 生成建议 → Verifier 复核；仅生成修订计划，不改论文</span>
+          </div>
+          <div class="review-toolbar">
+            <button id="review-button" class="primary">运行审稿</button>
+            <span id="review-status" class="status-badge UNKNOWN">未运行</span>
+            <span id="review-meta" class="muted small"></span>
+          </div>
+          <div id="review-error" class="review-error hidden"></div>
+          <div id="review-result" class="hidden">
+            <div class="review-grid">
+              <section class="review-col">
+                <h4>Reviewer 问题 <span id="issue-count" class="muted small"></span></h4>
+                <div id="issue-list" class="issue-list"></div>
+              </section>
+              <section class="review-col">
+                <h4>Writer 修订建议 <span id="patch-count" class="muted small"></span></h4>
+                <div id="patch-list" class="patch-list"></div>
+              </section>
+            </div>
+            <section class="review-verify">
+              <h4>Verifier 复核 <span id="verdict-badge" class="status-badge"></span></h4>
+              <div id="verify-list"></div>
+            </section>
+            <details class="review-trace">
+              <summary>工具调用记录（<span id="trace-count">0</span> 步）</summary>
+              <div id="trace-list" class="trace-list"></div>
+            </details>
+          </div>
+        </section>
+
+        <section class="block">
+          <h3>产物</h3>
+          <div id="artifact-list" class="artifact-list"></div>
+        </section>
+      </div>
+    </section>
+  </main>
+
+  <div id="log-modal" class="modal hidden" role="dialog" aria-modal="true">
+    <div class="modal-card">
+      <div class="modal-head">
+        <h3 id="log-title">日志</h3>
+        <button id="log-close" class="ghost">关闭</button>
+      </div>
+      <div class="tabs">
+        <button data-stream="stdout" class="tab active">stdout</button>
+        <button data-stream="stderr" class="tab">stderr</button>
+      </div>
+      <pre id="log-body" class="log-body">—</pre>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+  <script src="review.js"></script>
+</body>
+</html>

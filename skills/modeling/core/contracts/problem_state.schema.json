@@ -1,0 +1,70 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "forge-v6/problem-state/v1",
+  "title": "ProblemState — L1→L2 接口",
+  "description": "Problem Intelligence 输出，Strategy Planner 消费。核心职责：让下游不用读题目原文就能确定解题路线。",
+  "type": "object",
+  "required": ["problem_id", "problem_type", "sub_type", "core_contradiction"],
+  "properties": {
+    "problem_id": {
+      "type": "string",
+      "description": "赛题标识，如 CUMCM_2020_A",
+      "examples": ["CUMCM_2021_A", "CUMCM_2020_A"]
+    },
+    "problem_type": {
+      "type": "string",
+      "enum": ["optimization", "prediction", "evaluation", "classification", "mechanism", "hybrid"],
+      "description": "主题型。hybrid 表示含 ≥2 种类型的混合题"
+    },
+    "sub_type": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "single_objective", "multi_objective", "constrained", "unconstrained",
+          "time_series", "non_time_series", "small_sample",
+          "physics_modeling", "parameter_identification", "system_dynamics",
+          "data_analysis", "pattern_recognition"
+        ]
+      },
+      "description": "子类型标签列表。如 A 题常含 physics_modeling + multi_objective"
+    },
+    "core_contradiction": {
+      "type": "string",
+      "description": "核心矛盾/研究问题，一句话。这是论文开篇的锚。",
+      "examples": ["焊接质量(温度窗口) vs 生产效率(速度最大化)"]
+    },
+    "domain": {
+      "type": "string",
+      "description": "领域标签，辅助模型选择",
+      "examples": ["industrial_process", "environmental", "logistics", "finance"]
+    },
+    "constraints": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "题给硬约束列表"
+    },
+    "data_status": {
+      "type": "object",
+      "properties": {
+        "available": { "type": "boolean" },
+        "format": { "type": "string", "examples": ["CSV", "XLSX", "TXT"] },
+        "estimated_rows": { "type": "integer" },
+        "estimated_columns": { "type": "integer" },
+        "has_missing": { "type": "boolean" },
+        "has_time_series": { "type": "boolean" }
+      }
+    },
+    "sub_problems": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "examples": ["Q1", "Q2"] },
+          "task": { "type": "string", "description": "子问题任务描述" },
+          "type": { "type": "string", "description": "子问题类型，可能与主类型不同" }
+        }
+      }
+    }
+  }
+}

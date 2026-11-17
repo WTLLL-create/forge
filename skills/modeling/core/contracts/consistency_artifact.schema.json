@@ -1,0 +1,37 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "forge-v6/consistency-artifact/v1",
+  "title": "ConsistencyArtifact — 科学一致性产物 v1.0",
+  "description": "Scientific Consistency Engine 输出。验证论文的科学推理链：假设→模型→数据→结论 之间的一致性。与 ReviewArtifact 互补：Reviewer=质量评价, Consistency=推理链验证。",
+  "type": "object",
+  "required": ["check_id", "findings", "consistency_score"],
+  "properties": {
+    "check_id": {"type": "string"},
+    "findings": {"type": "array", "items": {"$ref": "#/$defs/inconsistency"}},
+    "consistency_score": {"type": "integer", "minimum": 0, "maximum": 100},
+    "chains_checked": {"type": "array", "items": {"type": "string"}},
+    "summary": {"type": "string"}
+  },
+  "$defs": {
+    "inconsistency": {
+      "type": "object",
+      "required": ["id", "type", "severity", "description", "source_node", "target_node"],
+      "properties": {
+        "id": {"type": "string"},
+        "type": {"type": "string", "enum": [
+          "assumption_model_mismatch", "formula_variable_gap",
+          "prediction_validation_missing", "data_conclusion_leap",
+          "objective_conflict_ignored", "method_limitation_hidden"
+        ]},
+        "severity": {"type": "string", "enum": ["P0", "P1", "P2", "P3"]},
+        "layer": {"type": "string", "enum": ["rule", "pattern", "llm_reasoning"]},
+        "description": {"type": "string"},
+        "source_node": {"type": "string", "description": "科学推理链中的上游节点 (assumption/model/data/conclusion)"},
+        "target_node": {"type": "string", "description": "下游节点"},
+        "evidence": {"type": "string"},
+        "suggestion": {"type": "string"},
+        "confidence": {"type": "number"}
+      }
+    }
+  }
+}

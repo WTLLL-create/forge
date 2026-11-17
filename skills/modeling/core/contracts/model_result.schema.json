@@ -1,0 +1,89 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "forge-v6/model-result/v1",
+  "title": "ModelResult — L4→L5 接口",
+  "description": "Models/Data/Compute 执行后的输出，Evidence Layer 消费。核心：告诉验证层"算出了什么、怎么算的、有没有异常"。",
+  "type": "object",
+  "required": ["result_id", "sub_problem_id", "model_used", "execution_status"],
+  "properties": {
+    "result_id": {
+      "type": "string",
+      "description": "唯一标识，格式: MR-{contract_id}-{sub_problem_id}"
+    },
+    "sub_problem_id": {
+      "type": "string",
+      "description": "对应 DecisionContract.decisions[].sub_problem_id"
+    },
+    "model_used": {
+      "type": "string",
+      "description": "实际使用的模型（可能与 primary_model 不同，如果 primary 失败触发回退）"
+    },
+    "execution_status": {
+      "type": "string",
+      "enum": ["success", "partial", "failed", "pending"],
+      "description": "success=完整输出, partial=部分输出(如收敛但未达精度), failed=无法求解"
+    },
+    "results_summary": {
+      "type": "object",
+      "description": "结果摘要，格式依赖模型类型",
+      "properties": {
+        "key_metrics": {
+          "type": "object",
+          "description": "关键指标，如 R², MAE, objective_value",
+          "additionalProperties": { "type": "number" }
+        },
+        "output_type": {
+          "type": "string",
+          "enum": ["scalar", "vector", "matrix", "pareto_front", "distribution", "curve", "classification", "cluster"],
+          "description": "输出数据类型，决定论文中用什么图"
+        },
+        "summary_text": {
+          "type": "string",
+          "description": "一句话结果描述，可直接用于论文摘要",
+          "examples": ["最优过炉速度 v=78.5 cm/min, 峰值温度 243°C 满足工艺窗口"]
+        }
+      }
+    },
+    "execution_log": {
+      "type": "object",
+      "properties": {
+        "environment": { "type": "string", "examples": ["Python 3.13, scipy 1.16, pymoo 0.6.2"] },
+        "runtime_seconds": { "type": "number" },
+        "convergence": { "type": "boolean" },
+        "n_iterations": { "type": "integer" },
+        "warnings": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "issues": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "type": { "type": "string", "enum": ["convergence", "data_quality", "parameter_sensitivity", "numerical_instability", "model_assumption_violation"] },
+          "severity": { "type": "string", "enum": ["high", "medium", "low"] },
+          "description": { "type": "string" },
+          "suggested_fix": { "type": "string" }
+        }
+      }
+    },
+    "model_fallback": {
+      "type": "object",
+      "description": "如果 primary_model 失败，记录了回退路径",
+      "properties": {
+        "occurred": { "type": "boolean" },
+        "original_model": { "type": "string" },
+        "fallback_model": { "type": "string" },
+        "reason": { "type": "string" }
+      }
+    },
+    "artifacts": {
+      "type": "object",
+      "description": "产出的文件路径",
+      "properties": {
+        "figures": { "type": "array", "items": { "type": "string" } },
+        "tables": { "type": "array", "items": { "type": "string" } },
+        "data_outputs": { "type": "array", "items": { "type": "string" } }
+      }
+    }
+  }
+}

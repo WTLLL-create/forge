@@ -1,0 +1,86 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "TemplateContract",
+  "description": "竞赛论文模板规范合同 — 定义页面/字体/标题/表格/公式/参考文献的格式要求",
+  "type": "object",
+  "required": ["competition", "page", "font", "heading", "table", "equation", "reference"],
+  "properties": {
+    "competition": {
+      "type": "object",
+      "required": ["name", "version"],
+      "properties": {
+        "name": {"type": "string", "enum": ["CUMCM", "HuaweiCup", "MCM", "School"]},
+        "version": {"type": "string"},
+        "template_file": {"type": "string"}
+      }
+    },
+    "page": {
+      "type": "object",
+      "required": ["size", "margin"],
+      "properties": {
+        "size": {"type": "string", "enum": ["A4", "Letter"]},
+        "margin": {
+          "type": "object",
+          "required": ["top", "bottom", "left", "right"],
+          "properties": {
+            "top": {"type": "string"},
+            "bottom": {"type": "string"},
+            "left": {"type": "string"},
+            "right": {"type": "string"}
+          }
+        },
+        "header": {"type": "string"},
+        "footer": {"type": "string"}
+      }
+    },
+    "font": {
+      "type": "object",
+      "required": ["body_cn", "body_en", "body_size"],
+      "properties": {
+        "body_cn": {"type": "string", "description": "中文正文字体"},
+        "body_en": {"type": "string", "description": "英文/数字字体"},
+        "body_size": {"type": "string", "description": "正文字号, 如 '小四' 或 '12pt'"},
+        "line_spacing": {"type": "number", "description": "行距倍数"}
+      }
+    },
+    "heading": {
+      "type": "object",
+      "properties": {
+        "level1": {"type": "object", "properties": {"font": {"type": "string"}, "size": {"type": "string"}}},
+        "level2": {"type": "object", "properties": {"font": {"type": "string"}, "size": {"type": "string"}}},
+        "level3": {"type": "object", "properties": {"font": {"type": "string"}, "size": {"type": "string"}}}
+      }
+    },
+    "table": {
+      "type": "object",
+      "required": ["style"],
+      "properties": {
+        "style": {"type": "string", "enum": ["three_line"]},
+        "top_border": {"type": "string", "default": "1.5pt"},
+        "header_border": {"type": "string", "default": "0.75pt"},
+        "bottom_border": {"type": "string", "default": "1.5pt"},
+        "vertical_border": {"type": "string", "default": "none"},
+        "font_size": {"type": "string", "default": "五号"},
+        "caption_position": {"type": "string", "enum": ["above", "below"], "default": "above"}
+      }
+    },
+    "equation": {
+      "type": "object",
+      "required": ["align", "numbering"],
+      "properties": {
+        "align": {"type": "string", "enum": ["center"], "default": "center"},
+        "numbering": {"type": "string", "enum": ["right", "none"], "default": "right"},
+        "font": {"type": "string", "default": "Cambria Math"},
+        "render_engine": {"type": "string", "enum": ["omml", "text", "image"], "default": "omml"}
+      }
+    },
+    "reference": {
+      "type": "object",
+      "required": ["format"],
+      "properties": {
+        "format": {"type": "string", "enum": ["GB/T 7714", "APA", "IEEE"], "default": "GB/T 7714"},
+        "min_count": {"type": "integer", "default": 5}
+      }
+    }
+  }
+}
