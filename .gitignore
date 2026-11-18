@@ -15,7 +15,7 @@ venv/
 
 # 日志与运行产物
 *.log
-runtime/
+/runtime/
 projects/*/runtime/
 projects/*/data/
 projects/*/results/

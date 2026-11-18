@@ -1,0 +1,66 @@
+{
+  "schema": "forge-contest-profile/v1",
+  "profile_id": "cumcm_2026",
+  "competition": "全国大学生数学建模竞赛",
+  "edition": 2026,
+  "verified_on": "2026-09-09",
+  "timezone": "Asia/Shanghai",
+  "problem_release_at": "2026-09-10T18:00:00+08:00",
+  "local_max_review_age_days": 7,
+  "freshness_note": "7天是本次实现的本地复核阈值，不是官方期限；开赛与提交前仍须核对官方通知及赛区补充要求。",
+  "official_problem_hosts": ["www.mcm.edu.cn", "mcm.edu.cn", "cumcm.cnki.net", "dxs.moe.gov.cn", "www.hep.com.cn", "cumcm.icourses.cn", "www.baltamatica.com"],
+  "sources": [
+    {"id": "schedule", "url": "https://www.mcm.edu.cn/", "published_on": null, "verified_on": "2026-09-09", "supports": "当届题目发布时间与发布渠道"},
+    {"id": "participation", "url": "https://www.mcm.edu.cn/html_cn/node/9d8e511fe7a1447b35f53a82c908e2e0.html", "published_on": "2026-03-03", "effective_on": "2026-03-01", "supports": "第5条赛中交流平台限制；第6条AI辅助与参赛队责任"},
+    {"id": "paper", "url": "https://www.mcm.edu.cn/html_cn/node/4cd596519c9eb9fbd866398f6df0caa3.html", "published_on": "2026-03-03", "supports": "2026论文格式与支撑材料"},
+    {"id": "ai", "url": "https://www.mcm.edu.cn/html_cn/node/fef94648f2836ab6cc81586f4c38512b.html", "published_on": "2026-08-03", "effective_on": "2026-09-01", "supports": "AI声明、详情PDF、人工主导与核验"},
+    {"id": "notice_first", "url": "https://www.mcm.edu.cn/html_cn/node/d6fd7a0ee8f3a3d525e30af1c365fcec.html", "published_on": "2026-03-24", "supports": "2026竞赛时间/报名/组别/规模/费用/注意事项（PDF附件含报名和参赛须知2026-03-25修订、章程2023修订稿、参赛规则2026修订稿、赛区评阅工作规范2019修订稿）"},
+    {"id": "team_note", "url": "https://www.mcm.edu.cn/html_cn/node/5c230fff21dfca259d578813a1b249aa.html", "published_on": "2023-09-05", "supports": "组队不超过3人、同一所学校、无组长/队长/组员区分（2021年9月23日组委会说明）"}
+  ],
+  "timeline_2026": {
+    "source": "2026高教社杯第一次通知（2026-03-24）及《报名和参赛须知》（2026-03-25修订）",
+    "registration_open": "2026-05-01T09:00:00+08:00",
+    "registration_close": "2026-09-07T20:00:00+08:00",
+    "contest_start": "2026-09-10T18:00:00+08:00",
+    "contest_end": "2026-09-13T20:00:00+08:00",
+    "md5_deadline": "2026-09-13T20:00:00+08:00",
+    "upload_window_start": "2026-09-13T20:30:00+08:00",
+    "upload_window_end": "2026-09-14T14:00:00+08:00"
+  },
+  "team_rules": {
+    "team_size": "每队1-3名大学生，须属于同一所学校（同一法人单位）",
+    "no_leader_distinction": "队员之间无组长/队长/组员区分",
+    "groups": "本科组与高职高专组（含职业本科学生）；报名截止后不得更改组别；研究生不得参加",
+    "school_constraint": "不得以院（部）系或校区名义参赛（异地办学且具有独立招生代码的除外）",
+    "instructor": "每队最多一名指导教师（或教师组），竞赛期间不得进行任何形式指导"
+  },
+  "rule_highlights_2026": [
+    "参赛规则第5条：竞赛期间不得在任何交流平台（含贴吧、QQ群、微信群、网络直播间、知乎、小红书、CSDN、GitHub等）浏览、发布或讨论与赛题相关内容",
+    "参赛规则第3条：指导教师在竞赛期间不得以任何方式指导参赛学生（含解释赛题、提供选题/解题建议、提供参考资料、修改论文），否则按违纪处理且该教师两年内不受理报名申请",
+    "论文格式：A4纸、上下左右页边距至少2.5厘米、左侧装订；第一页承诺书、第二页编号专用页",
+    "论文格式：第三页摘要专用页（含标题和关键词，原则上不超过一页），从摘要页开始以阿拉伯数字从1连续编号",
+    "论文格式：第四页起为正文（不要目录、不超过30页）；正文之后为附录（页数不限），附录含支撑材料文件列表与完整可运行源程序，缺少/不可运行/与论文不符可能取消评奖资格",
+    "论文格式：电子版为单独PDF或Word文件（建议非图片PDF）、不压缩、不超过20MB；电子版第一页必须为摘要专用页；支撑材料用WinRAR压缩为RAR/ZIP、不超过20MB",
+    "评阅规范：论文相似度（同方知网文献库或竞赛自建库）任一大于等于25%的，原则上不能报送全国评阅",
+    "AI规定：论文参考文献之前设置AI工具使用声明（未使用/使用二选一）；使用AI须在支撑材料提供AI工具使用详情.pdf（工具名称版本或型号、用途和环节、主要提示方式与使用过程、采纳人工修改和核验情况）",
+    "报名费用：赛区组委会向全国组委会缴纳标准为每队50元；学校向赛区的费用标准与方式由赛区组委会决定"
+  ],
+  "requirements_for_human_review": {
+    "ai_declaration_location": "参考文献之前",
+    "ai_details_filename": "AI工具使用详情.pdf",
+    "ai_details_location": "支撑材料",
+    "ai_details_content": ["工具名称及版本或型号", "用途和环节", "主要提示方式与使用过程", "采纳、人工修改与核验情况；语言润色情形依官方原文"],
+    "human_review": "核心建模和分析由参赛队主导；AI参与内容逐项人工核实",
+    "body_page_limit": 30,
+    "abstract_page_guidance": "原则上一页",
+    "table_of_contents": "不设置目录",
+    "electronic_first_page": "摘要专用页；不含承诺书和编号页",
+    "paper_format": ["PDF", "Word"],
+    "paper_size_mb_max": 20,
+    "support_archive_format": ["RAR", "ZIP"],
+    "support_size_mb_max": 20,
+    "support_contents": "可运行源程序、自查数据、必要中间结果；附录列清单并附完整代码；匿名性逐文件检查",
+    "table_policy": "standards/academic_table_standard.md；已有锁定规格不得自动更改"
+  },
+  "scope": "资料快照及运行前元数据筛查；不是主办方认证，不是自动成稿验收，也不是网络访问控制"
+}

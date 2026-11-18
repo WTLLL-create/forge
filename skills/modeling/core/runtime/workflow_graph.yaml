@@ -1,0 +1,132 @@
+# Forge v6.5.1 — Workflow Execution DAG
+# ============================================
+# 定义 15 个 governance skill 之间的执行拓扑。
+# 每个节点声明 input/output 合同和 depends_on 关系。
+# WorkflowExecutor 按拓扑排序执行。
+
+version: "v6.5.1"
+principle: "Each node declares what it consumes and produces. Executor resolves DAG and passes artifacts."
+
+nodes:
+
+  problem_intelligence:
+    type: decision
+    description: "分析题目 → ProblemState"
+    input: ["UserProblem"]
+    output: ["ProblemState"]
+    depends_on: []
+
+  model_strategy_engine:
+    type: decision
+    description: "候选生成+评分+推荐 → StrategyArtifact"
+    input: ["ProblemState", "DatasetProfile"]
+    output: ["StrategyArtifact"]
+    depends_on: [problem_intelligence]
+
+  argument_compiler:
+    type: explanation
+    description: "论据编译 → DecisionContract"
+    input: ["StrategyArtifact", "ProblemState"]
+    output: ["ArgumentArtifact"]
+    depends_on: [model_strategy_engine]
+
+  model_specification:
+    type: specification
+    description: "模型规格化 → ModelSpec"
+    input: ["StrategyArtifact", "DecisionContract"]
+    output: ["ModelSpecification"]
+    depends_on: [model_strategy_engine, argument_compiler]
+
+  validation_plan:
+    type: governance
+    description: "验证规划 → ValidationPlan"
+    input: ["DecisionContract"]
+    output: ["ValidationPlan"]
+    depends_on: [argument_compiler]
+
+  paper_structure:
+    type: planning
+    description: "结构选择 → PaperBlueprint"
+    input: ["ProblemState"]
+    output: ["PaperBlueprint"]
+    depends_on: [problem_intelligence]
+
+  section_generator:
+    type: orchestration
+    description: "章节编排 → SectionArtifacts"
+    input: ["PaperBlueprint", "DecisionContract", "ModelSpecification"]
+    output: ["SectionArtifacts"]
+    depends_on: [paper_structure, argument_compiler, model_specification]
+
+  abstract_compiler:
+    type: content
+    description: "摘要编译 → AbstractSpec"
+    input: ["ProblemState", "DecisionContract", "ModelResult"]
+    output: ["AbstractArtifact"]
+    depends_on: [argument_compiler, model_specification]
+
+  formula_compiler:
+    type: execution
+    description: "公式编译 → FormulaArtifact"
+    input: ["SectionArtifacts", "ModelSpecification"]
+    output: ["FormulaArtifact"]
+    depends_on: [section_generator, model_specification]
+
+  chart_compiler:
+    type: execution
+    description: "图表编译 → ChartArtifact"
+    input: ["SectionArtifacts", "ModelResult"]
+    output: ["ChartArtifact"]
+    depends_on: [section_generator]
+
+  table_compiler:
+    type: execution
+    description: "表格编译 → TableArtifact"
+    input: ["SectionArtifacts", "ModelResult"]
+    output: ["TableArtifact"]
+    depends_on: [section_generator]
+
+  reference_compiler:
+    type: execution
+    description: "参考文献 → ReferenceArtifact"
+    input: ["SectionArtifacts", "DecisionContract"]
+    output: ["ReferenceArtifact"]
+    depends_on: [section_generator]
+
+  style_compiler:
+    type: specification
+    description: "样式编译 → StyleConfig"
+    input: ["competition_type"]
+    output: ["StyleConfig"]
+    depends_on: [paper_structure]
+
+  quality_gate:
+    type: governance
+    description: "质量门禁 → GateReport"
+    input: ["ArtifactGraph"]
+    output: ["GateReport"]
+    depends_on: [abstract_compiler, formula_compiler, chart_compiler, table_compiler, reference_compiler, style_compiler]
+
+  reviewer_rules:
+    type: review
+    description: "审查引擎 → ReviewArtifact"
+    input: ["ArtifactGraph", "GateReport"]
+    output: ["ReviewArtifact"]
+    depends_on: [quality_gate]
+
+  contradiction_finder:
+    type: review
+    description: "科学一致性 → ConsistencyArtifact"
+    input: ["ArtifactGraph", "ReviewArtifact"]
+    output: ["ConsistencyArtifact"]
+    depends_on: [reviewer_rules]
+
+# 入度统计（用于拓扑排序）
+topology:
+  entry_points: [problem_intelligence]
+  leaf_nodes: [contradiction_finder]
+  max_depth: 6
+  parallel_groups:
+    level_3: [argument_compiler, paper_structure, style_compiler]
+    level_4: [model_specification, validation_plan, section_generator]
+    level_5: [abstract_compiler, formula_compiler, chart_compiler, table_compiler, reference_compiler]
